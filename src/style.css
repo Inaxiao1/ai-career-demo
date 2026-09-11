@@ -576,6 +576,49 @@ body::after {
 
 .scene-footer { font-size: 12px; color: var(--ink-faint); letter-spacing: 0.04em; }
 
+/* 学生端完成后的角色承接：仍保持小程序浅色页面语气，让教师端成为自然的下一步。 */
+.teacher-route-group {
+  margin-top: 2px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.teacher-route-group .nav-group-label { color: #a7d7ca; letter-spacing: 0.12em; }
+.handoff-screen { background: #f4f7fb; }
+.handoff-app { height: 100%; color: #1a2b42; background: #f4f7fb; font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+.handoff-status { display: flex; justify-content: space-between; padding: 10px 14px 4px; color: #738498; font-size: 8px; }
+.handoff-header { display: flex; align-items: center; height: 35px; padding: 0 14px; border-bottom: 1px solid #e6ebf1; background: #fff; }
+.handoff-header > span { color: #718399; font-size: 21px; line-height: 1; }
+.handoff-header strong { margin-left: 9px; font-size: 13px; }
+.handoff-header em { margin-left: auto; padding: 4px 7px; border-radius: 7px; background: #edf3ff; color: #4a78ca; font-size: 8px; font-style: normal; }
+.handoff-content { padding: 23px 14px 0; }
+.handoff-kicker { color: #4b80d4; font-size: 8px; font-weight: 700; letter-spacing: 1.2px; }
+.handoff-content h2 { margin-top: 8px; color: #1e3653; font-size: 19px; line-height: 1.35; }
+.handoff-content > p { margin-top: 9px; color: #7d8b9b; font-size: 9px; line-height: 1.7; }
+.handoff-route { display: flex; align-items: center; margin: 21px 3px 0; }
+.handoff-route-step { display: flex; align-items: center; gap: 5px; color: #8c99a8; font-size: 8px; }
+.handoff-route-step b { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: #e1e7ef; color: #8290a1; font-size: 9px; }
+.handoff-route-step.done { color: #299473; font-weight: 600; }
+.handoff-route-step.done b { background: #d7f1e7; color: #299473; }
+.handoff-route-step.next { color: #356bc8; font-weight: 600; }
+.handoff-route-step.next b { background: #e0ebff; color: #356bc8; }
+.handoff-route > i { width: 53px; height: 1px; margin: 0 9px; background: #cbd6e2; }
+.handoff-card { margin-top: 18px; padding: 13px 11px 12px; border: 1px solid #cfe1fb; border-radius: 12px; background: linear-gradient(140deg, #fff, #f0f6ff); box-shadow: 0 8px 20px rgba(43, 91, 160, 0.1); }
+.handoff-card-icon { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 9px; background: #e5efff; color: #3975d1; font-size: 19px; }
+.handoff-card-copy strong, .handoff-card-copy small { display: block; }
+.handoff-card-copy strong { margin-top: 11px; color: #244568; font-size: 13px; }
+.handoff-card-copy small { margin-top: 5px; color: #8091a5; font-size: 8px; }
+.handoff-cta { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 13px; padding: 9px 11px; border: 0; border-radius: 8px; background: #3976d6; color: #fff; font-size: 10px; font-weight: 600; cursor: pointer; box-shadow: 0 5px 12px rgba(57, 118, 214, 0.25); }
+.handoff-cta span { font-size: 16px; line-height: 10px; }
+.handoff-cta:hover { background: #2e67c2; }
+.handoff-note { margin-top: 15px; padding: 10px; border-radius: 8px; background: #fff; }
+.handoff-note b, .handoff-note span { display: block; }
+.handoff-note b { color: #4a6078; font-size: 9px; }
+.handoff-note span { margin-top: 4px; color: #96a3b1; font-size: 8px; line-height: 1.5; }
+.handoff-bottom-nav { position: absolute; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(4, 1fr); height: 42px; border-top: 1px solid #e3e9f0; background: rgba(255,255,255,.97); }
+.handoff-bottom-nav span { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 2px; color: #9aa6b3; font-size: 14px; }
+.handoff-bottom-nav span.active { color: #3976d6; }
+.handoff-bottom-nav small { font-size: 7px; }
+
 /* ===== 教师端结构化演示 =====
    教师端来源于小程序真实工作台：保留学校/教师身份、浅色业务界面、
    班级数据与通知工作流，避免把教师功能误读成学生端截图。 */
@@ -659,7 +702,9 @@ body::after {
 
 /* 窄屏适配：侧栏收起为顶部横向 */
 @media (max-width: 760px) {
+  .scene { justify-content: flex-start; overflow-x: hidden; }
   .glass-card { flex-direction: column; min-height: unset; }
+  .glass-card { height: auto; overflow: visible; }
   .sidebar { width: 100%; border-right: none; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding: 16px; }
   .chapter-list { flex-direction: row; overflow-x: auto; overflow-y: hidden; }
   .nav-group { flex-direction: row; align-items: center; }
@@ -668,6 +713,7 @@ body::after {
   .chapter-item { flex-shrink: 0; }
   .chapter-item .chapter-subtitle { display: none; }
   .sidebar-foot { display: none; }
-  .stage-wrap { padding: 18px; }
+  .stage-wrap { flex: none; min-height: 552px; padding: 18px; }
+  .stage { flex: none; height: 516px; }
   .phone { height: 516px; }
 }

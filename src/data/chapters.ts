@@ -47,6 +47,8 @@ export interface Step {
     /** 跳转目标（章节 + 步骤） */
     goto: JumpTarget
   }
+  /** 学生端完成后的角色承接页；保留在学生流程中，点击后进入教师端。 */
+  handoffView?: 'teacher'
   /** 教师端演示使用的结构化界面视图；不依赖截图，便于展示真实操作流程。 */
   teacherView?:
     | 'dashboard'
@@ -327,12 +329,20 @@ export const chapters: Chapter[] = [
       {
         caption: '消息中心 · 未读提醒与分类',
         detail:
-          '未读数量角标提醒你有多少消息待查看；列表按「师」与「系」区分教师通知和系统通知，重要节点不错过。',
+          '未读数量角标提醒你有多少消息待查看；列表按「师」与「系」区分教师通知和系统通知，重要节点不错过。看完学生端的完整闭环后，下一步一起看看老师如何跟进这些状态。',
         image: 'assets/shots/messages.png',
         hotspots: [
           { x: 92, y: 16, label: '未读数量角标' },
           { x: 50, y: 47, label: '教师 / 系统通知分类' },
         ],
+      },
+      {
+        caption: '学生端完成 · 接下来看看教师端',
+        detail:
+          '学生端的规划、求职、学习和消息体验到这里完成。教师端接着使用同一批班级数据，从班级看板开始跟进重点学生、查看就业和学习进度，再发出提醒。点击「进入教师端」，按步骤继续浏览。',
+        image: 'assets/shots/messages.png',
+        handoffView: 'teacher',
+        clickTarget: { x: 50, y: 74, label: '进入教师端', goto: { chapter: 9, step: 0 } },
       },
     ],
   },

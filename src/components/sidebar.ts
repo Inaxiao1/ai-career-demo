@@ -25,10 +25,10 @@ function itemHtml(c: Chapter, i: number): string {
     </button>`
 }
 
-function groupHtml(label: string, items: string): string {
+function groupHtml(label: string, items: string, className = ''): string {
   if (!items) return ''
   return `
-    <div class="nav-group">
+    <div class="nav-group ${className}">
       <div class="nav-group-label">${label}</div>
       <div class="nav-group-items">${items}</div>
     </div>`
@@ -68,7 +68,7 @@ export function createSidebar(root: HTMLElement, player: Player): void {
       ${groupHtml('学生端', overview)}
       ${groupHtml('学生端 · AI 功能', ai)}
       ${groupHtml('学生端 · 核心功能', core)}
-      ${groupHtml('教师端', teacher)}
+      ${groupHtml('下一段 · 教师端', teacher, 'teacher-route-group')}
     </nav>
     <div class="sidebar-foot">
       <span class="foot-dot"></span>

@@ -51,6 +51,39 @@ function resetFocusZoom(phone: HTMLElement): void {
   phone.style.setProperty('--ty', '0%')
 }
 
+function renderTeacherHandoff(root: HTMLElement, step: Step, player: Player): void {
+  const cta = step.clickTarget
+  root.innerHTML = `
+    <div class="phone handoff-phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen handoff-screen">
+        <div class="handoff-app">
+          <div class="handoff-status"><span>9:41</span><span>● ◒ ▰</span></div>
+          <div class="handoff-header"><span>‹</span><strong>消息中心</strong><em>学生端</em></div>
+          <div class="handoff-content">
+            <span class="handoff-kicker">学生端体验完成</span>
+            <h2>接下来，看看老师如何帮助你</h2>
+            <p>你的求职规划、学习进度和消息提醒，都会成为老师跟进班级的依据。</p>
+            <div class="handoff-route">
+              <div class="handoff-route-step done"><b>✓</b><span>学生端</span></div>
+              <i></i>
+              <div class="handoff-route-step next"><b>2</b><span>教师端</span></div>
+            </div>
+            <div class="handoff-card">
+              <div class="handoff-card-icon">⌂</div>
+              <div class="handoff-card-copy"><strong>教师工作台</strong><small>班级看板 · 学生跟进 · 通知提醒</small></div>
+              ${cta ? `<button class="handoff-cta" title="${cta.label ?? '进入教师端'}">${cta.label ?? '进入教师端'} <span>›</span></button>` : ''}
+            </div>
+            <div class="handoff-note"><b>同一份求职进度</b><span>从个人成长到班级陪伴，继续看老师如何把数据变成行动。</span></div>
+          </div>
+          <div class="handoff-bottom-nav"><span class="active">⌂<small>首页</small></span><span>▣<small>岗位</small></span><span>▤<small>课程</small></span><span>≡<small>消息</small></span></div>
+        </div>
+      </div>
+    </div>`
+  const btn = root.querySelector<HTMLButtonElement>('.handoff-cta')
+  if (btn && cta) btn.addEventListener('click', () => player.goto(cta.goto))
+}
+
 function teacherTopbar(): string {
   return `
     <div class="teacher-topbar">
@@ -220,6 +253,10 @@ export function renderPhone(
 ): void {
   const step = state.chapter.steps[state.stepIndex]
 
+  if (step.handoffView) {
+    renderTeacherHandoff(root, step, player)
+    return
+  }
   if (step.teacherView) {
     renderTeacherView(root, step, player)
     return
