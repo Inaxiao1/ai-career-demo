@@ -623,6 +623,15 @@ body::after {
    教师端来源于小程序真实工作台：保留学校/教师身份、浅色业务界面、
    班级数据与通知工作流，避免把教师功能误读成学生端截图。 */
 .teacher-screen { background: #f4f6fa; }
+.teacher-auto-phone .teacher-scroll-canvas {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: auto;
+  min-height: 100%;
+}
+.teacher-auto-phone .teacher-demo { height: auto; min-height: 100%; overflow: visible; padding-bottom: 54px; }
 .teacher-demo {
   position: relative;
   height: 100%;
@@ -680,6 +689,22 @@ body::after {
 .teacher-entry { position: relative; margin: 8px 12px 0; padding: 11px; border: 1px solid #e1e7ed; border-radius: 10px; background: #fff; }
 .teacher-entry strong, .teacher-entry small { display: block; }
 .teacher-entry strong { font-size: 11px; }.teacher-entry small { margin-top: 4px; color: #91a0ad; font-size: 8px; }.teacher-entry span { position: absolute; top: 14px; right: 12px; color: #7c8e9f; font-size: 17px; }
+.teacher-dashboard-page { padding-bottom: 68px; }
+.teacher-dashboard-strip { margin: 10px 12px 0; padding: 10px; border-radius: 9px; background: #eaf5f2; color: #6f8d84; font-size: 8px; }
+.teacher-dashboard-strip strong { float: right; color: #26886f; font-size: 10px; }
+.teacher-dashboard-strip i { display: block; height: 5px; margin-top: 8px; overflow: hidden; border-radius: 4px; background: #d4e9e2; }
+.teacher-dashboard-strip em { display: block; height: 100%; border-radius: inherit; background: #45ae8d; }
+.teacher-dashboard-activity { margin: 13px 12px 0; padding: 10px; border: 1px solid #e1e7ed; border-radius: 10px; background: #fff; }
+.teacher-dashboard-activity > div { display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px; border-bottom: 1px solid #edf0f3; }
+.teacher-dashboard-activity > div strong { font-size: 10px; }.teacher-dashboard-activity > div small { color: #9aa6b2; font-size: 7px; }
+.teacher-dashboard-activity p { display: flex; align-items: center; margin-top: 9px; color: #82909e; font-size: 8px; }
+.teacher-dashboard-activity p b { width: 38px; color: #33485f; font-size: 8px; }.teacher-dashboard-activity p span { flex: 1; }.teacher-dashboard-activity p em { padding: 3px 5px; border-radius: 5px; background: #e9f8f1; color: #2d9975; font-size: 7px; font-style: normal; }.teacher-dashboard-activity p em.alert { background: #fff0d8; color: #b97821; }
+.teacher-board-entry { position: relative; display: flex; align-items: center; justify-content: space-between; margin: 12px; padding: 12px; border: 1px solid #bfe1d5; border-radius: 11px; background: linear-gradient(135deg, #effaf5, #fff); box-shadow: 0 8px 16px rgba(34, 126, 99, .08); }
+.teacher-board-entry strong, .teacher-board-entry small { display: block; }.teacher-board-entry strong { color: #1f765e; font-size: 11px; }.teacher-board-entry small { margin-top: 5px; color: #839b93; font-size: 8px; }.teacher-board-entry > span { color: #3c9a7b; font-size: 20px; }
+.teacher-dashboard-detail { padding-bottom: 68px; }
+.teacher-detail-hero { margin: 12px; padding: 12px; border-radius: 10px; background: linear-gradient(140deg, #eaf5ff, #fff); }.teacher-detail-hero small, .teacher-detail-hero strong, .teacher-detail-hero span { display: block; }.teacher-detail-hero small { color: #7e91a6; font-size: 8px; }.teacher-detail-hero strong { margin-top: 5px; color: #2f6bc4; font-size: 25px; }.teacher-detail-hero span { margin-top: 3px; color: #6d9b8c; font-size: 8px; }.teacher-detail-hero i { display: block; height: 5px; margin-top: 9px; overflow: hidden; border-radius: 4px; background: #dce9f4; }.teacher-detail-hero em { display: block; height: 100%; border-radius: inherit; background: #4e86dc; }
+.teacher-dashboard-detail-title { display: flex; align-items: center; justify-content: space-between; margin: 14px 13px 7px; }.teacher-dashboard-detail-title strong { font-size: 10px; }.teacher-dashboard-detail-title small { color: #9aa6b1; font-size: 7px; }
+.teacher-detail-status-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 0 12px; }.teacher-detail-status-grid div { padding: 10px 4px; border-radius: 8px; background: #fff; text-align: center; }.teacher-detail-status-grid b, .teacher-detail-status-grid span { display: block; }.teacher-detail-status-grid b { color: #2d6cc9; font-size: 16px; }.teacher-detail-status-grid span { margin-top: 4px; color: #8c99a6; font-size: 7px; }
 .teacher-bottom-nav { position: absolute; right: 0; bottom: 0; left: 0; z-index: 2; display: grid; grid-template-columns: repeat(5, 1fr); height: 44px; border-top: 1px solid #e4e9ee; background: rgba(255,255,255,.97); }
 .teacher-bottom-nav span { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; color: #9ba6b1; font-size: 7px; }.teacher-bottom-nav b { font-size: 14px; line-height: 13px; }.teacher-bottom-nav span.active { color: #2378e0; }
 .teacher-page-title { display: block; margin-top: 16px; }.teacher-page-title strong { display: block; margin-top: 5px; font-size: 17px; }.teacher-page-title span { display: block; margin-top: 5px; }

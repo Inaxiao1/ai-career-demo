@@ -26,8 +26,8 @@ export interface Step {
   /** 功能点标注（可选） */
   hotspots?: Hotspot[]
   /**
-   * 长图自动滚动展示（可选）：image 为整页长截图，
-   * 进入步骤后长图在手机壳内自动向下滑动，滑到底部停住；
+   * 长内容自动滚动展示（可选）：image 为整页长截图，或 teacherView 为结构化长页面；
+   * 进入步骤后内容在手机壳内自动向下滑动，滑到底部停住；
    * 停住后 clickTarget 才以固定索引点形式亮起。
    */
   autoScroll?: boolean
@@ -52,6 +52,7 @@ export interface Step {
   /** 教师端演示使用的结构化界面视图；不依赖截图，便于展示真实操作流程。 */
   teacherView?:
     | 'dashboard'
+    | 'dashboard-detail'
     | 'employment'
     | 'learning'
     | 'students'
@@ -104,12 +105,12 @@ const ICONS = {
 export const chapters: Chapter[] = [
   {
     id: 'overview',
-    title: '产品总览',
-    subtitle: '一站式 AI 职业助手',
+    title: '学生端功能总览',
+    subtitle: '学生功能与 AI 求职助手',
     icon: ICONS.overview,
     steps: [
       {
-        caption: '功能总览 · 一站式 AI 职业助手',
+        caption: '学生端功能总览 · 一站式 AI 职业助手',
         detail:
           '一张图看懂这款产品：大学生与职场新人上传简历、录音，输入求职目标；AI 职业助手一站式完成规划、简历、面试与复盘，最终指向「拿下 Offer」。看，中心圆上亮起了索引点——点击它，开始逐功能体验。',
         image: 'assets/shots/overview-map.svg',
@@ -348,34 +349,52 @@ export const chapters: Chapter[] = [
   },
   {
     id: 'teacher-overview',
-    title: '教师工作台',
-    subtitle: '班级经营总览',
+    title: '教师端功能总览',
+    subtitle: '工作台引导与班级经营',
     audience: 'teacher',
     icon: ICONS.overview,
     steps: [
       {
+        caption: '教师端功能总览 · 从数据到行动',
+        detail:
+          '进入教师端，先用一张图看清教师工作台的完整闭环：班级看板、学生跟进、就业分析、学习分析和通知中心。接下来从班级看板开始，按步骤看老师如何把学生端的求职进度变成班级行动。点击中心索引点进入教师工作台。',
+        image: 'assets/shots/teacher-overview.svg',
+        stageImage: true,
+        clickTarget: { x: 50, y: 49, label: '进入教师工作台', goto: { chapter: 9, step: 1 } },
+      },
+      {
         caption: '教师工作台 · 班级经营总览',
         detail:
-          '教师端从班级经营开始：王老师可以在一个工作台里看到班级学生数、Offer / 入职结果、平均学习进度和需要关注的人数。点击看板区域，进入就业进度视图。',
+          '教师工作台先自动展示首页的完整内容：班级学生数、Offer / 入职结果、平均学习进度、待关注学生和最近动态。页面滚动到底部后，索引球会聚焦到「班级看板」——点击它进入班级看板详情。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'dashboard',
-        clickTarget: { x: 50, y: 48, label: '查看就业进度', goto: { chapter: 9, step: 1 } },
+        autoScroll: true,
+        clickTarget: { x: 50, y: 78, label: '打开班级看板', goto: { chapter: 9, step: 2 } },
+      },
+      {
+        caption: '班级看板详情 · 看见每一位学生',
+        detail:
+          '点击班级看板后进入详情页。这里会自动滚动展示就业状态、课程进度、重点学生和最近动态，最后停在下一步行动区域。看完详情，再进入就业分析做更细的状态拆解。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'dashboard-detail',
+        autoScroll: true,
+        clickTarget: { x: 50, y: 82, label: '进入就业分析', goto: { chapter: 9, step: 3 } },
       },
       {
         caption: '就业进度 · 一眼掌握班级结果',
         detail:
-          '就业进度页把学生状态拆成已关注、面试中、实习中和已有结果四类，同时显示结果转化率。教师不用逐个翻页，就能先定位班级趋势。',
+          '就业进度页把学生状态拆成已关注、面试中、实习中和已有结果四类，同时显示结果转化率。教师不用逐个翻页，就能先定位班级趋势，再切换到学习进度。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'employment',
-        clickTarget: { x: 50, y: 62, label: '查看学习进度', goto: { chapter: 9, step: 2 } },
+        clickTarget: { x: 50, y: 62, label: '查看学习进度', goto: { chapter: 9, step: 4 } },
       },
       {
         caption: '学习进度 · 识别课程完成瓶颈',
         detail:
-          '切换到学习进度，可以看到老师推送课程的平均完成率、已完成学生数和 AI 工具使用率，帮助教师把辅导重点放在真正卡住的环节。',
+          '切换到学习进度，可以看到老师推送课程的平均完成率、已完成学生数和 AI 工具使用率，帮助教师把辅导重点放在真正卡住的环节。接下来进入学生跟进。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'learning',
-        clickTarget: { x: 50, y: 65, label: '管理学生跟进', goto: { chapter: 9, step: 3 } },
+        clickTarget: { x: 50, y: 65, label: '管理学生跟进', goto: { chapter: 9, step: 5 } },
       },
       {
         caption: '教师端首页 · 从数据进入行动',

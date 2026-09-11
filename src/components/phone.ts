@@ -141,7 +141,9 @@ function teacherViewMarkup(view: NonNullable<Step['teacherView']>): string {
   const common = `${teacherTopbar()}<div class="teacher-school"><span class="school-mark">江</span><strong>江苏理工学院</strong><em>教师端</em></div>`
   switch (view) {
     case 'dashboard':
-      return `<div class="teacher-demo">${common}<div class="teacher-welcome"><small>TEACHER WORKSPACE</small><strong>你好，王老师</strong><span>江苏理工学院 · 计算机2301班</span></div><div class="teacher-metrics">${teacherMetric('6', '班级学生')}${teacherMetric('1', '需要关注', 'warning')}${teacherMetric('2', 'Offer / 入职')}${teacherMetric('70%', '平均学习')}</div><div class="teacher-section-title"><strong>教师工作</strong><small>班级管理与学生跟进</small></div><div class="teacher-action-grid"><div class="teacher-action-card primary"><b>▥</b><strong>班级看板</strong><small>查看就业与学习进度</small></div><div class="teacher-action-card"><b>✉</b><strong>发布通知</strong><small>提醒学生完成任务</small></div></div><div class="teacher-entry"><strong>进入完整教师工作台</strong><small>筛选学生、关注重点对象并发送提醒</small><span>›</span></div>${teacherNav()}</div>`
+      return `<div class="teacher-demo teacher-dashboard-page">${common}<div class="teacher-welcome"><small>TEACHER WORKSPACE</small><strong>你好，王老师</strong><span>江苏理工学院 · 计算机2301班</span></div><div class="teacher-metrics">${teacherMetric('6', '班级学生')}${teacherMetric('1', '需要关注', 'warning')}${teacherMetric('2', 'Offer / 入职')}${teacherMetric('70%', '平均学习')}</div><div class="teacher-section-title"><strong>教师工作</strong><small>班级管理与学生跟进</small></div><div class="teacher-action-grid"><div class="teacher-action-card primary"><b>▥</b><strong>班级看板</strong><small>查看就业与学习进度</small></div><div class="teacher-action-card"><b>✉</b><strong>发布通知</strong><small>提醒学生完成任务</small></div></div><div class="teacher-dashboard-strip"><span>本周班级活跃度</span><strong>86%</strong><i><em style="width:86%"></em></i></div><div class="teacher-dashboard-activity"><div><strong>最近动态</strong><small>按更新时间排列</small></div><p><b>李同学</b><span>完成简历课程 · 2小时前</span><em>已更新</em></p><p><b>王同学</b><span>新增目标岗位 · 昨天</span><em>已更新</em></p><p><b>赵同学</b><span>21天未更新求职状态</span><em class="alert">待跟进</em></p></div><div class="teacher-board-entry"><div><strong>班级看板</strong><small>6位学生 · 2个结果 · 1位待关注</small></div><span>›</span></div>${teacherNav()}</div>`
+    case 'dashboard-detail':
+      return `<div class="teacher-demo teacher-dashboard-detail">${common}<div class="teacher-page-title"><small>CLASS DASHBOARD</small><strong>班级看板详情</strong><span>计算机2301班 · 更新于今天 09:32</span></div><div class="teacher-detail-hero"><div><small>班级整体进度</small><strong>70%</strong><span>较上周提升 8%</span></div><i><em style="width:70%"></em></i></div><div class="teacher-dashboard-detail-title"><strong>就业状态</strong><small>6位学生</small></div><div class="teacher-detail-status-grid"><div><b>2</b><span>已有结果</span></div><div><b>2</b><span>转化中</span></div><div><b>2</b><span>待推进</span></div></div><div class="teacher-dashboard-detail-title"><strong>重点学生</strong><small>优先查看</small></div>${teacherStudent('赵同学', '信息管理', '运营专员', 17, '待关注', 'orange')}${teacherStudent('张同学', '计算机科学', '前端开发', 67, '已关注', 'blue')}<div class="teacher-dashboard-detail-title"><strong>下一步建议</strong></div><div class="teacher-next-action"><small>NEXT ACTION</small><strong>先查看就业分析，再给赵同学发送提醒</strong><span>让班级数据进入跟进动作</span></div>${teacherNav()}</div>`
     case 'employment':
       return `<div class="teacher-demo">${common}<div class="teacher-page-title"><small>EMPLOYMENT</small><strong>就业状态分布</strong><span>全班实时概览</span></div>${teacherTabs('employment')}<div class="teacher-insight-card">${teacherMetric('1', '已关注', 'blue')}${teacherMetric('1', '面试中', 'violet')}${teacherMetric('1', '实习中', 'cyan')}${teacherMetric('2', '已有结果', 'green')}<div class="teacher-rate"><span>已有求职结果</span><strong>33.3%</strong><i><em style="width:33.3%"></em></i></div></div>${teacherChart()}<div class="teacher-callout">建议优先跟进 <strong>1</strong> 位长期未更新学生</div>${teacherNav()}</div>`
     case 'learning':
@@ -177,16 +179,35 @@ function renderTeacherView(root: HTMLElement, step: Step, player: Player): void 
       (h, i) => `<div class="hotspot${edgeClass(h.x)}" style="left:${h.x}%;top:${h.y}%"><span class="hotspot-pin"><i class="hotspot-num">${i + 1}</i></span><span class="hotspot-label">${h.label}</span></div>`
     )
     .join('')
-  root.innerHTML = `
-    <div class="phone teacher-phone">
-      <div class="phone-notch"></div>
-      <div class="phone-screen teacher-screen">
-        ${teacherViewMarkup(step.teacherView!)}
-        <div class="hotspot-layer">${staticSpots}${cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div>
-      </div>
-    </div>`
+  const auto = !!step.autoScroll
+  root.innerHTML = auto
+    ? `
+      <div class="phone teacher-phone teacher-auto-phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen teacher-screen">
+          <div class="teacher-scroll-canvas">${teacherViewMarkup(step.teacherView!)}</div>
+          <div class="hotspot-layer">${staticSpots}</div>
+          <div class="pin-layer">${cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div>
+        </div>
+      </div>`
+    : `
+      <div class="phone teacher-phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen teacher-screen">
+          ${teacherViewMarkup(step.teacherView!)}
+          <div class="hotspot-layer">${staticSpots}${cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div>
+        </div>
+      </div>`
+  const phone = root.querySelector<HTMLElement>('.phone')!
+  const screen = root.querySelector<HTMLElement>('.phone-screen')!
   const btn = root.querySelector<HTMLButtonElement>('.hotspot-cta')
   if (btn && cta) btn.addEventListener('click', () => player.goto(cta.goto))
+  if (auto) {
+    const canvas = root.querySelector<HTMLElement>('.teacher-scroll-canvas')!
+    startAutoScroll(screen, canvas, cta ? () => applyFocusZoom(phone, cta.x, cta.y) : undefined)
+  } else {
+    resetFocusZoom(phone)
+  }
 }
 
 // ---- 长图自动滚动展示 ----
@@ -198,53 +219,48 @@ function stopAutoScroll(): void {
 }
 
 /** 长图从顶部平滑滑到底部后停住；结束时给 phone-screen 加 scroll-done 让固定索引点亮起 */
-function startAutoScroll(
+function startAutoScroll(screen: HTMLElement, canvas: HTMLElement, onDone?: () => void): void {
+  const dist = canvas.scrollHeight - screen.clientHeight
+  if (dist <= 2) {
+    screen.classList.add('scroll-done')
+    onDone?.()
+    return
+  }
+  // 时长与滚动距离成正比：约每屏 6 秒，整体限制在 4~10 秒
+  const duration = Math.min(10000, Math.max(4000, (dist / screen.clientHeight) * 6000))
+  const t0 = performance.now()
+  let raf = 0
+  const tick = (t: number) => {
+    const p = Math.min(1, (t - t0) / duration)
+    // 慢快慢三段式缓动（easeInOutCubic）：起步慢 → 中途加速快滑 → 临近底部减速停住
+    const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2
+    canvas.style.transform = `translateY(-${(dist * e).toFixed(1)}px)`
+    if (p < 1) {
+      raf = requestAnimationFrame(tick)
+    } else {
+      screen.classList.add('scroll-done')
+      cancelAutoScroll = null
+      onDone?.()
+    }
+  }
+  raf = requestAnimationFrame(tick)
+  cancelAutoScroll = () => cancelAnimationFrame(raf)
+}
+
+function startImageAutoScroll(
   screen: HTMLElement,
   canvas: HTMLElement,
   img: HTMLImageElement,
   onDone?: () => void
 ): void {
-  const run = () => {
-    const dist = canvas.scrollHeight - screen.clientHeight
-    if (dist <= 2) {
-      screen.classList.add('scroll-done')
-      onDone?.()
-      return
-    }
-    // 时长与滚动距离成正比：约每屏 6 秒，整体限制在 4~10 秒
-    const duration = Math.min(
-      10000,
-      Math.max(4000, (dist / screen.clientHeight) * 6000)
-    )
-    const t0 = performance.now()
-      let raf = 0
-      const tick = (t: number) => {
-        const p = Math.min(1, (t - t0) / duration)
-        // 慢快慢三段式缓动（easeInOutCubic）：起步慢 → 中途加速快滑 → 临近底部减速停住
-        const e =
-          p < 0.5
-            ? 4 * p * p * p
-            : 1 - Math.pow(-2 * p + 2, 3) / 2
-        canvas.style.transform = `translateY(-${(dist * e).toFixed(1)}px)`
-        if (p < 1) {
-          raf = requestAnimationFrame(tick)
-        } else {
-          screen.classList.add('scroll-done')
-          cancelAutoScroll = null
-          onDone?.()
-        }
-      }
-      raf = requestAnimationFrame(tick)
-      cancelAutoScroll = () => cancelAnimationFrame(raf)
-    }
-
-    if (img.complete && img.naturalHeight > 0) {
-      run()
-    } else {
-      img.addEventListener('load', run, { once: true })
-      cancelAutoScroll = () => img.removeEventListener('load', run)
-    }
+  const run = () => startAutoScroll(screen, canvas, onDone)
+  if (img.complete && img.naturalHeight > 0) {
+    run()
+  } else {
+    img.addEventListener('load', run, { once: true })
+    cancelAutoScroll = () => img.removeEventListener('load', run)
   }
+}
 
 export function renderPhone(
   root: HTMLElement,
@@ -306,7 +322,7 @@ export function renderPhone(
     const btn = pinLayer.querySelector<HTMLButtonElement>('.hotspot-cta')!
     btn.classList.add('pinned')
     btn.addEventListener('click', () => player.goto(cta.goto))
-    startAutoScroll(screen, canvas, img, () => applyFocusZoom(phone, cta.x, cta.y))
+    startImageAutoScroll(screen, canvas, img, () => applyFocusZoom(phone, cta.x, cta.y))
   } else {
     layer.innerHTML = staticSpots + (cta ? ctaHtml(cta.x, cta.y, cta.label) : '')
     pinLayer.innerHTML = ''
@@ -318,7 +334,7 @@ export function renderPhone(
     }
   }
 
-  if (auto && !cta) startAutoScroll(screen, canvas, img)
+  if (auto && !cta) startImageAutoScroll(screen, canvas, img)
 }
 
 /** 宽幅图步骤（功能总览图）：不用手机壳，图片按原比例铺满舞台 */
