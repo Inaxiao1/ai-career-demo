@@ -47,6 +47,21 @@ export interface Step {
     /** 跳转目标（章节 + 步骤） */
     goto: JumpTarget
   }
+  /** 教师端演示使用的结构化界面视图；不依赖截图，便于展示真实操作流程。 */
+  teacherView?:
+    | 'dashboard'
+    | 'employment'
+    | 'learning'
+    | 'students'
+    | 'student-detail'
+    | 'employment-detail'
+    | 'employment-summary'
+    | 'learning-detail'
+    | 'learning-cohort'
+    | 'notice'
+    | 'notice-compose'
+    | 'notice-target'
+    | 'notice-sent'
 }
 
 export interface Chapter {
@@ -57,6 +72,8 @@ export interface Chapter {
   group?: 'ai' | 'core'
   /** 侧边栏图标（24x24 stroke 风格 SVG 内部路径） */
   icon?: string
+  /** 侧栏一级分区；缺省视为学生端，教师端单独聚合。 */
+  audience?: 'student' | 'teacher'
   steps: Step[]
 }
 
@@ -316,6 +333,210 @@ export const chapters: Chapter[] = [
           { x: 92, y: 16, label: '未读数量角标' },
           { x: 50, y: 47, label: '教师 / 系统通知分类' },
         ],
+      },
+    ],
+  },
+  {
+    id: 'teacher-overview',
+    title: '教师工作台',
+    subtitle: '班级经营总览',
+    audience: 'teacher',
+    icon: ICONS.overview,
+    steps: [
+      {
+        caption: '教师工作台 · 班级经营总览',
+        detail:
+          '教师端从班级经营开始：王老师可以在一个工作台里看到班级学生数、Offer / 入职结果、平均学习进度和需要关注的人数。点击看板区域，进入就业进度视图。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'dashboard',
+        clickTarget: { x: 50, y: 48, label: '查看就业进度', goto: { chapter: 9, step: 1 } },
+      },
+      {
+        caption: '就业进度 · 一眼掌握班级结果',
+        detail:
+          '就业进度页把学生状态拆成已关注、面试中、实习中和已有结果四类，同时显示结果转化率。教师不用逐个翻页，就能先定位班级趋势。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'employment',
+        clickTarget: { x: 50, y: 62, label: '查看学习进度', goto: { chapter: 9, step: 2 } },
+      },
+      {
+        caption: '学习进度 · 识别课程完成瓶颈',
+        detail:
+          '切换到学习进度，可以看到老师推送课程的平均完成率、已完成学生数和 AI 工具使用率，帮助教师把辅导重点放在真正卡住的环节。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'learning',
+        clickTarget: { x: 50, y: 65, label: '管理学生跟进', goto: { chapter: 9, step: 3 } },
+      },
+      {
+        caption: '教师端首页 · 从数据进入行动',
+        detail:
+          '统计不是终点。点击学生入口后，教师可以搜索姓名、专业或目标岗位，标记重点学生，并从学生详情直接发送提醒。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'students',
+        clickTarget: { x: 50, y: 70, label: '进入学生跟进', goto: { chapter: 10, step: 0 } },
+      },
+    ],
+  },
+  {
+    id: 'teacher-students',
+    title: '学生跟进',
+    subtitle: '筛选重点学生',
+    audience: 'teacher',
+    icon: ICONS.review,
+    steps: [
+      {
+        caption: '学生跟进 · 多条件筛选与搜索',
+        detail:
+          '教师工作台支持按就业状态、课程进度和关键词筛选。演示数据中，赵同学课程进度仅 17%，且已有 21 天未更新，会被自动打上需要关注标签。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'students',
+        clickTarget: { x: 50, y: 53, label: '查看赵同学', goto: { chapter: 10, step: 1 } },
+      },
+      {
+        caption: '学生详情 · 看见完整跟进上下文',
+        detail:
+          '学生详情集中展示当前就业状态、目标岗位、老师推送课程进度、AI 工具使用情况和最近更新。教师可以据此判断是补课程、补简历，还是安排一次沟通。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'student-detail',
+        clickTarget: { x: 50, y: 76, label: '确认重点学生', goto: { chapter: 10, step: 2 } },
+      },
+      {
+        caption: '重点学生 · 关注与发送提醒',
+        detail:
+          '关注会把学生加入教师的重点列表，方便后续从“已关注”维度集中查看。需要马上推进时，可以从详情页直接进入定向通知。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'student-detail',
+        clickTarget: { x: 50, y: 84, label: '发送定向提醒', goto: { chapter: 13, step: 1 } },
+      },
+      {
+        caption: '学生跟进 · 从个体回到班级视角',
+        detail:
+          '完成个体跟进后，教师可以回到班级维度继续查看就业分布，形成“班级概览 → 个体跟进 → 班级复盘”的工作闭环。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'students',
+        clickTarget: { x: 50, y: 88, label: '查看就业分布', goto: { chapter: 11, step: 0 } },
+      },
+    ],
+  },
+  {
+    id: 'teacher-employment',
+    title: '就业分析',
+    subtitle: '班级就业状态分布',
+    audience: 'teacher',
+    icon: ICONS.chart,
+    steps: [
+      {
+        caption: '就业分析 · 状态分布与结果转化',
+        detail:
+          '就业分析把六位学生按状态分布：准备中、已关注、面试中、实习中、已拿 Offer 和已入职。教师可以优先关注准备中且长时间未更新的学生。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'employment',
+        clickTarget: { x: 50, y: 72, label: '查看结果构成', goto: { chapter: 11, step: 1 } },
+      },
+      {
+        caption: '结果构成 · 从状态看下一步动作',
+        detail:
+          '已拿 Offer 与已入职代表阶段结果，面试中与实习中代表正在转化的机会，准备中则是需要教师主动介入的早期信号。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'employment-detail',
+        clickTarget: { x: 50, y: 58, label: '查看班级摘要', goto: { chapter: 11, step: 2 } },
+      },
+      {
+        caption: '班级摘要 · 让数据支持辅导安排',
+        detail:
+          '本班 6 位学生中，2 位已有结果，平均课程进度 70%。教师可以结合关注名单安排一对一沟通，也可以直接发布全班提醒。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'employment-summary',
+        clickTarget: { x: 50, y: 72, label: '查看学习进度', goto: { chapter: 12, step: 0 } },
+      },
+      {
+        caption: '就业与学习 · 两个维度交叉判断',
+        detail:
+          '就业结果和学习投入需要放在一起看：低进度但正在面试的学生要及时补齐面试准备，高进度但尚未关注岗位的学生要尽快完成求职启动。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'employment',
+        clickTarget: { x: 50, y: 88, label: '进入学习分析', goto: { chapter: 12, step: 0 } },
+      },
+    ],
+  },
+  {
+    id: 'teacher-learning',
+    title: '学习分析',
+    subtitle: '课程完成与 AI 使用',
+    audience: 'teacher',
+    icon: ICONS.course,
+    steps: [
+      {
+        caption: '学习分析 · 推送课程完成概况',
+        detail:
+          '学习进度页围绕老师推送的课程统计平均进度、完成率与 AI 工具使用率，让教师知道学生是在内容理解、执行练习还是工具使用上遇到障碍。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'learning',
+        clickTarget: { x: 50, y: 70, label: '查看课程明细', goto: { chapter: 12, step: 1 } },
+      },
+      {
+        caption: '课程明细 · 找到低于 40% 的学生',
+        detail:
+          '课程进度支持低于 40%、学习中和已完成筛选。教师可以先看低进度学生，再结合最近更新时间判断是需要提醒，还是需要一次针对性的辅导。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'learning-detail',
+        clickTarget: { x: 50, y: 60, label: '查看学习分层', goto: { chapter: 12, step: 2 } },
+      },
+      {
+        caption: '学习分层 · 从平均值落到人',
+        detail:
+          '平均进度 70% 之外，还要看完成 100% 的人数、课程完成率和 AI 使用率。按学生分层后，教师能把统一课程推送变成更精确的班级运营。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'learning-cohort',
+        clickTarget: { x: 50, y: 70, label: '发布班级通知', goto: { chapter: 13, step: 0 } },
+      },
+      {
+        caption: '学习分析 · 进入班级沟通',
+        detail:
+          '当一类问题在班级中重复出现时，教师可以用班级通知统一提醒；对于个别学生，则回到学生详情发送定向提醒。两种沟通方式互相补充。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'learning',
+        clickTarget: { x: 50, y: 88, label: '写一条通知', goto: { chapter: 13, step: 0 } },
+      },
+    ],
+  },
+  {
+    id: 'teacher-notice',
+    title: '通知中心',
+    subtitle: '班级与定向提醒',
+    audience: 'teacher',
+    icon: ICONS.messages,
+    steps: [
+      {
+        caption: '通知中心 · 面向全班发起提醒',
+        detail:
+          '教师可以面向全班学生发布学习任务、求职节点和材料提醒。通知入口与看板同处一个工作台，减少在不同页面之间来回切换。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice',
+        clickTarget: { x: 50, y: 60, label: '打开通知编辑器', goto: { chapter: 13, step: 1 } },
+      },
+      {
+        caption: '通知编辑器 · 标题、内容与级别',
+        detail:
+          '通知编辑器包含标题、正文和通知级别。普通通知适合课程安排，重要提醒适合秋招节点、材料截止时间等需要学生尽快处理的事项。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-compose',
+        clickTarget: { x: 50, y: 73, label: '选择发送范围', goto: { chapter: 13, step: 2 } },
+      },
+      {
+        caption: '发送范围 · 全班通知或定向提醒',
+        detail:
+          '同一套通知能力覆盖两种场景：全班通知用于统一安排，定向提醒用于跟进赵同学这类重点学生。教师可以在发送前确认对象，避免打扰无关学生。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-target',
+        clickTarget: { x: 50, y: 72, label: '确认发送', goto: { chapter: 13, step: 3 } },
+      },
+      {
+        caption: '通知已发送 · 教师工作闭环完成',
+        detail:
+          '发布完成后，通知进入学生消息中心，教师回到看板继续观察学习和就业状态。至此，教师端形成了“看数据、找重点、做跟进、发提醒”的完整工作流。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-sent',
       },
     ],
   },

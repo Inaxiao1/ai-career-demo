@@ -1,5 +1,5 @@
 // 左侧章节导航组件：玻璃雾面高级质感版
-// 结构：品牌区 + 分组导航（AI 功能专区 / 核心功能），每项带 stroke 图标、
+// 结构：品牌区 + 分组导航（学生端 / 教师端），每项带 stroke 图标、
 // 激活光晕与左侧渐变指示条；数据驱动，分组信息来自 chapters 配置。
 import { Player } from '../engine/player'
 import { Chapter, chapters } from '../data/chapters'
@@ -35,14 +35,24 @@ function groupHtml(label: string, items: string): string {
 }
 
 export function createSidebar(root: HTMLElement, player: Player): void {
+  const overview = chapters
+    .map((c, i) => ({ c, i }))
+    .filter((x) => x.c.audience !== 'teacher' && !x.c.group)
+    .map((x) => itemHtml(x.c, x.i))
+    .join('')
   const ai = chapters
     .map((c, i) => ({ c, i }))
-    .filter((x) => x.c.group === 'ai')
+    .filter((x) => x.c.audience !== 'teacher' && x.c.group === 'ai')
     .map((x) => itemHtml(x.c, x.i))
     .join('')
   const core = chapters
     .map((c, i) => ({ c, i }))
-    .filter((x) => x.c.group === 'core')
+    .filter((x) => x.c.audience !== 'teacher' && x.c.group === 'core')
+    .map((x) => itemHtml(x.c, x.i))
+    .join('')
+  const teacher = chapters
+    .map((c, i) => ({ c, i }))
+    .filter((x) => x.c.audience === 'teacher')
     .map((x) => itemHtml(x.c, x.i))
     .join('')
 
@@ -51,13 +61,14 @@ export function createSidebar(root: HTMLElement, player: Player): void {
       <div class="brand-logo">AI</div>
       <div class="brand-text">
         <div class="brand-name">AI 职业规划小程序</div>
-        <div class="brand-tag">交互式功能演示</div>
+        <div class="brand-tag">学生端 · 教师端</div>
       </div>
     </div>
     <nav class="chapter-list">
-      ${groupHtml('', itemHtml(chapters[0], 0))}
-      ${groupHtml('AI 功能专区', ai)}
-      ${groupHtml('核心功能', core)}
+      ${groupHtml('学生端', overview)}
+      ${groupHtml('学生端 · AI 功能', ai)}
+      ${groupHtml('学生端 · 核心功能', core)}
+      ${groupHtml('教师端', teacher)}
     </nav>
     <div class="sidebar-foot">
       <span class="foot-dot"></span>
