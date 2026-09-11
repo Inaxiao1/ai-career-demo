@@ -57,6 +57,7 @@ export interface Step {
     | 'learning'
     | 'students'
     | 'student-detail'
+    | 'student-detail-followed'
     | 'employment-detail'
     | 'employment-summary'
     | 'learning-detail'
@@ -65,6 +66,9 @@ export interface Step {
     | 'notice-compose'
     | 'notice-target'
     | 'notice-sent'
+    | 'notice-compose-targeted'
+    | 'notice-targeted'
+    | 'notice-targeted-sent'
 }
 
 export interface Chapter {
@@ -374,11 +378,11 @@ export const chapters: Chapter[] = [
       {
         caption: '班级看板详情 · 看见每一位学生',
         detail:
-          '点击班级看板后进入详情页。这里会自动滚动展示就业状态、课程进度、重点学生和最近动态，最后停在下一步行动区域。看完详情，再进入就业分析做更细的状态拆解。',
+          '点击班级看板后进入详情页。这里会自动滚动展示就业状态、课程进度、重点学生和最近动态，最后停在「就业进度」入口。索引球会放大这个真实入口，点击后进入就业分析。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'dashboard-detail',
         autoScroll: true,
-        clickTarget: { x: 50, y: 82, label: '进入就业分析', goto: { chapter: 9, step: 3 } },
+        clickTarget: { x: 50, y: 82, label: '点击就业进度', goto: { chapter: 11, step: 0 } },
       },
       {
         caption: '就业进度 · 一眼掌握班级结果',
@@ -386,7 +390,7 @@ export const chapters: Chapter[] = [
           '就业进度页把学生状态拆成已关注、面试中、实习中和已有结果四类，同时显示结果转化率。教师不用逐个翻页，就能先定位班级趋势，再切换到学习进度。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'employment',
-        clickTarget: { x: 50, y: 62, label: '查看学习进度', goto: { chapter: 9, step: 4 } },
+        clickTarget: { x: 50, y: 42, label: '点击学习进度', goto: { chapter: 12, step: 0 } },
       },
       {
         caption: '学习进度 · 识别课程完成瓶颈',
@@ -394,15 +398,16 @@ export const chapters: Chapter[] = [
           '切换到学习进度，可以看到老师推送课程的平均完成率、已完成学生数和 AI 工具使用率，帮助教师把辅导重点放在真正卡住的环节。接下来进入学生跟进。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'learning',
-        clickTarget: { x: 50, y: 65, label: '管理学生跟进', goto: { chapter: 9, step: 5 } },
+        clickTarget: { x: 84, y: 42, label: '点击已关注', goto: { chapter: 10, step: 0 } },
       },
       {
-        caption: '教师端首页 · 从数据进入行动',
+        caption: '教师工作台 · 学生跟进入口',
         detail:
-          '统计不是终点。点击学生入口后，教师可以搜索姓名、专业或目标岗位，标记重点学生，并从学生详情直接发送提醒。',
+          '教师工作台的「已关注」标签会进入学生跟进列表。先从学生列表下方的「发布班级通知」入口开始班级沟通，再回到列表点击具体学生，查看详情并完成个体跟进。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'students',
-        clickTarget: { x: 50, y: 70, label: '进入学生跟进', goto: { chapter: 10, step: 0 } },
+        autoScroll: true,
+        clickTarget: { x: 50, y: 82, label: '发布班级通知', goto: { chapter: 13, step: 0 } },
       },
     ],
   },
@@ -416,10 +421,19 @@ export const chapters: Chapter[] = [
       {
         caption: '学生跟进 · 多条件筛选与搜索',
         detail:
-          '教师工作台支持按就业状态、课程进度和关键词筛选。演示数据中，赵同学课程进度仅 17%，且已有 21 天未更新，会被自动打上需要关注标签。',
+          '教师工作台支持按就业状态、课程进度和关键词筛选。先看到学生列表下方的「发布班级通知」入口，完成班级提醒后，再回到「已关注」列表逐个跟进。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'students',
-        clickTarget: { x: 50, y: 53, label: '查看赵同学', goto: { chapter: 10, step: 1 } },
+        autoScroll: true,
+        clickTarget: { x: 50, y: 82, label: '发布班级通知', goto: { chapter: 13, step: 0 } },
+      },
+      {
+        caption: '学生跟进 · 点击学生卡片',
+        detail:
+          '从「已关注」维度进入学生跟进列表后，赵同学的卡片显示课程进度 17% 和 21 天未更新。索引球落在卡片上，点击卡片打开学生详情。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'students',
+        clickTarget: { x: 50, y: 63, label: '点击赵同学', goto: { chapter: 10, step: 2 } },
       },
       {
         caption: '学生详情 · 看见完整跟进上下文',
@@ -427,23 +441,15 @@ export const chapters: Chapter[] = [
           '学生详情集中展示当前就业状态、目标岗位、老师推送课程进度、AI 工具使用情况和最近更新。教师可以据此判断是补课程、补简历，还是安排一次沟通。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'student-detail',
-        clickTarget: { x: 50, y: 76, label: '确认重点学生', goto: { chapter: 10, step: 2 } },
+        clickTarget: { x: 23, y: 71, label: '点击关注', goto: { chapter: 10, step: 3 } },
       },
       {
         caption: '重点学生 · 关注与发送提醒',
         detail:
           '关注会把学生加入教师的重点列表，方便后续从“已关注”维度集中查看。需要马上推进时，可以从详情页直接进入定向通知。',
         image: 'assets/shots/teacher-dashboard.png',
-        teacherView: 'student-detail',
-        clickTarget: { x: 50, y: 84, label: '发送定向提醒', goto: { chapter: 13, step: 1 } },
-      },
-      {
-        caption: '学生跟进 · 从个体回到班级视角',
-        detail:
-          '完成个体跟进后，教师可以回到班级维度继续查看就业分布，形成“班级概览 → 个体跟进 → 班级复盘”的工作闭环。',
-        image: 'assets/shots/teacher-dashboard.png',
-        teacherView: 'students',
-        clickTarget: { x: 50, y: 88, label: '查看就业分布', goto: { chapter: 11, step: 0 } },
+        teacherView: 'student-detail-followed',
+        clickTarget: { x: 68, y: 71, label: '发送提醒', goto: { chapter: 13, step: 4 } },
       },
     ],
   },
@@ -468,7 +474,7 @@ export const chapters: Chapter[] = [
           '已拿 Offer 与已入职代表阶段结果，面试中与实习中代表正在转化的机会，准备中则是需要教师主动介入的早期信号。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'employment-detail',
-        clickTarget: { x: 50, y: 58, label: '查看班级摘要', goto: { chapter: 11, step: 2 } },
+        clickTarget: { x: 50, y: 53, label: '查看班级摘要', goto: { chapter: 11, step: 2 } },
       },
       {
         caption: '班级摘要 · 让数据支持辅导安排',
@@ -476,7 +482,7 @@ export const chapters: Chapter[] = [
           '本班 6 位学生中，2 位已有结果，平均课程进度 70%。教师可以结合关注名单安排一对一沟通，也可以直接发布全班提醒。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'employment-summary',
-        clickTarget: { x: 50, y: 72, label: '查看学习进度', goto: { chapter: 12, step: 0 } },
+        clickTarget: { x: 50, y: 34, label: '点击学习进度', goto: { chapter: 12, step: 0 } },
       },
       {
         caption: '就业与学习 · 两个维度交叉判断',
@@ -509,7 +515,7 @@ export const chapters: Chapter[] = [
           '课程进度支持低于 40%、学习中和已完成筛选。教师可以先看低进度学生，再结合最近更新时间判断是需要提醒，还是需要一次针对性的辅导。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'learning-detail',
-        clickTarget: { x: 50, y: 60, label: '查看学习分层', goto: { chapter: 12, step: 2 } },
+        clickTarget: { x: 50, y: 65, label: '查看学习分层', goto: { chapter: 12, step: 2 } },
       },
       {
         caption: '学习分层 · 从平均值落到人',
@@ -517,7 +523,7 @@ export const chapters: Chapter[] = [
           '平均进度 70% 之外，还要看完成 100% 的人数、课程完成率和 AI 使用率。按学生分层后，教师能把统一课程推送变成更精确的班级运营。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'learning-cohort',
-        clickTarget: { x: 50, y: 70, label: '发布班级通知', goto: { chapter: 13, step: 0 } },
+        clickTarget: { x: 84, y: 34, label: '点击已关注', goto: { chapter: 10, step: 1 } },
       },
       {
         caption: '学习分析 · 进入班级沟通',
@@ -542,7 +548,7 @@ export const chapters: Chapter[] = [
           '教师可以面向全班学生发布学习任务、求职节点和材料提醒。通知入口与看板同处一个工作台，减少在不同页面之间来回切换。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'notice',
-        clickTarget: { x: 50, y: 60, label: '打开通知编辑器', goto: { chapter: 13, step: 1 } },
+        clickTarget: { x: 50, y: 37, label: '打开通知编辑器', goto: { chapter: 13, step: 1 } },
       },
       {
         caption: '通知编辑器 · 标题、内容与级别',
@@ -566,6 +572,30 @@ export const chapters: Chapter[] = [
           '发布完成后，通知进入学生消息中心，教师回到看板继续观察学习和就业状态。至此，教师端形成了“看数据、找重点、做跟进、发提醒”的完整工作流。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'notice-sent',
+        clickTarget: { x: 50, y: 76, label: '回到学生跟进', goto: { chapter: 10, step: 1 } },
+      },
+      {
+        caption: '定向提醒 · 编辑赵同学的通知',
+        detail:
+          '从赵同学详情点击「发送提醒」后，通知编辑器会自动带入学生姓名，教师只需确认提醒内容，再选择发送范围。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-compose-targeted',
+        clickTarget: { x: 50, y: 73, label: '选择发送范围', goto: { chapter: 13, step: 5 } },
+      },
+      {
+        caption: '定向提醒 · 确认发送对象',
+        detail:
+          '发送范围明确显示为赵同学，避免把个体提醒误发给全班。确认后，提醒会回到学生端消息中心。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-targeted',
+        clickTarget: { x: 50, y: 72, label: '确认发送', goto: { chapter: 13, step: 6 } },
+      },
+      {
+        caption: '定向提醒已发送 · 跟进完成',
+        detail:
+          '赵同学已收到定向提醒。教师端的完整操作链路到这里闭环：看班级数据、定位学生、关注跟进，再把行动落实到消息。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-targeted-sent',
       },
     ],
   },
