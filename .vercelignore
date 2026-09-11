@@ -1,0 +1,6 @@
+# Vercel 部署上传清单：只排除依赖与本地状态。
+# 注意：本项目 dist/ 在 .gitignore 中（CLI 默认按 .gitignore 排除上传），
+# 静态站直接上传已构建产物，故用本文件覆盖，保留 dist/ 与 assets/。
+node_modules
+.git
+.vercel

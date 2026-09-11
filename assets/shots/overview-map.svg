@@ -1,0 +1,131 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" font-family="'PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#eaf1fe"/>
+    </linearGradient>
+    <radialGradient id="core" cx="0.5" cy="0.42" r="0.75">
+      <stop offset="0" stop-color="#f2f7ff"/>
+      <stop offset="0.7" stop-color="#dbe8fe"/>
+      <stop offset="1" stop-color="#c7d9fb"/>
+    </radialGradient>
+    <linearGradient id="pill" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+    <linearGradient id="tagA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="tagB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4f8cff"/>
+      <stop offset="1" stop-color="#2f6bff"/>
+    </linearGradient>
+    <linearGradient id="arr" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#bfdbfe"/>
+      <stop offset="1" stop-color="#3b82f6"/>
+    </linearGradient>
+    <linearGradient id="arrV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#bfdbfe"/>
+      <stop offset="1" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+
+  <!-- ===== 顶部：用户与素材入口 ===== -->
+  <ellipse cx="800" cy="150" rx="430" ry="78" fill="#edf3ff"/>
+  <g>
+    <circle cx="640" cy="118" r="50" fill="#dbeafe"/>
+    <g stroke="#2563eb" stroke-width="5" fill="none" stroke-linecap="round">
+      <rect x="622" y="96" width="36" height="44" rx="5"/>
+      <path d="M630 108h20M630 118h20M630 128h13"/>
+    </g>
+    <text x="640" y="208" font-size="26" font-weight="700" fill="#1f2937" text-anchor="middle">上传简历</text>
+  </g>
+  <g>
+    <circle cx="960" cy="118" r="50" fill="#dbeafe"/>
+    <g stroke="#2563eb" stroke-width="5" fill="none" stroke-linecap="round">
+      <rect x="949" y="96" width="22" height="34" rx="11"/>
+      <path d="M940 122a20 20 0 0 0 40 0M960 142v10M950 152h20"/>
+    </g>
+    <text x="960" y="208" font-size="26" font-weight="700" fill="#1f2937" text-anchor="middle">录音复盘</text>
+  </g>
+  <rect x="668" y="232" width="264" height="62" rx="31" fill="#dbeafe"/>
+  <text x="800" y="272" font-size="26" font-weight="700" fill="#1e40af" text-anchor="middle">大学生 · 职场新人</text>
+  <polygon points="786,306 814,306 814,334 830,334 800,368 770,334 786,334" fill="url(#arrV)"/>
+
+  <!-- ===== 左侧：求职输入 ===== -->
+  <g>
+    <rect x="110" y="339" width="72" height="72" rx="18" fill="#2563eb"/>
+    <g stroke="#ffffff" stroke-width="5" fill="none" stroke-linecap="round">
+      <rect x="128" y="355" width="36" height="42" rx="5"/>
+      <path d="M136 367h20M136 377h20M136 387h13"/>
+    </g>
+    <rect x="110" y="429" width="72" height="72" rx="18" fill="#f97316"/>
+    <g stroke="#ffffff" stroke-width="5" fill="none" stroke-linecap="round">
+      <rect x="126" y="455" width="40" height="28" rx="5"/>
+      <path d="M138 455v-7a6 6 0 0 1 12 0v7M126 468h40"/>
+    </g>
+    <rect x="110" y="519" width="72" height="72" rx="18" fill="#10b981"/>
+    <g stroke="#ffffff" stroke-width="5" fill="none" stroke-linecap="round">
+      <rect x="135" y="537" width="22" height="34" rx="11"/>
+      <path d="M126 563a20 20 0 0 0 40 0M146 583v8M136 591h20"/>
+    </g>
+    <rect x="110" y="609" width="72" height="72" rx="18" fill="#8b5cf6"/>
+    <g stroke="#ffffff" stroke-width="5" fill="none">
+      <circle cx="146" cy="645" r="17"/>
+      <circle cx="146" cy="645" r="8"/>
+      <circle cx="146" cy="645" r="1.5" fill="#ffffff"/>
+    </g>
+  </g>
+  <rect x="228" y="478" width="192" height="64" rx="32" fill="#dbeafe"/>
+  <text x="324" y="518" font-size="26" font-weight="700" fill="#1e40af" text-anchor="middle">求职输入</text>
+  <polygon points="440,496 502,496 502,484 536,510 502,536 502,524 440,524" fill="url(#arr)"/>
+  <text x="146" y="712" font-size="20" fill="#64748b" text-anchor="middle">简历 · 岗位 · 录音 · 目标</text>
+
+  <!-- ===== 中心：AI 职业助手 ===== -->
+  <path d="M662 392 A 170 170 0 0 0 662 628" stroke="#93c5fd" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <path d="M938 392 A 170 170 0 0 1 938 628" stroke="#93c5fd" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <circle cx="800" cy="510" r="150" fill="url(#core)" stroke="#93c5fd" stroke-width="3"/>
+  <text x="800" y="498" font-size="46" font-weight="800" fill="#0f172a" text-anchor="middle">AI 职业助手</text>
+  <text x="800" y="546" font-size="22" fill="#475569" text-anchor="middle">一站式求职规划闭环</text>
+
+  <!-- ===== 右侧：目标与价值 ===== -->
+  <polygon points="950,496 1012,496 1012,484 1046,510 1012,536 1012,524 950,524" fill="url(#arr)"/>
+  <polygon points="1240,378 1302,406 1302,432 1178,432 1178,406" fill="#dbeafe"/>
+  <text x="1240" y="418" font-size="22" font-weight="700" fill="#1d4ed8" text-anchor="middle">校招</text>
+  <polygon points="1420,378 1482,406 1482,432 1358,432 1358,406" fill="#dbeafe"/>
+  <text x="1420" y="418" font-size="22" font-weight="700" fill="#1d4ed8" text-anchor="middle">实习内推</text>
+  <rect x="1158" y="466" width="334" height="88" rx="44" fill="url(#pill)"/>
+  <text x="1325" y="522" font-size="38" font-weight="800" fill="#ffffff" text-anchor="middle">拿下 Offer</text>
+  <g fill="#3b82f6">
+    <polygon points="1239,596 1257,620 1248,620 1248,656 1230,656 1230,620 1221,620"/>
+    <polygon points="1334,596 1352,620 1343,620 1343,656 1325,656 1325,620 1316,620"/>
+    <polygon points="1429,596 1447,620 1438,620 1438,656 1420,656 1420,620 1411,620"/>
+  </g>
+  <text x="1239" y="690" font-size="22" font-weight="700" fill="#1d4ed8" text-anchor="middle">路径清晰</text>
+  <text x="1334" y="690" font-size="22" font-weight="700" fill="#1d4ed8" text-anchor="middle">简历过硬</text>
+  <text x="1429" y="690" font-size="22" font-weight="700" fill="#1d4ed8" text-anchor="middle">面试自信</text>
+
+  <!-- ===== 底部：八大功能 ===== -->
+  <rect x="120" y="740" width="1360" height="132" rx="44" fill="#e8f0fe"/>
+  <g font-size="24" font-weight="700" fill="#ffffff" text-anchor="middle">
+    <rect x="150"  y="768" width="150" height="76" rx="16" fill="url(#tagA)"/>
+    <text x="225"  y="814">求职规划</text>
+    <rect x="318"  y="768" width="150" height="76" rx="16" fill="url(#tagB)"/>
+    <text x="393"  y="814">简历制作</text>
+    <rect x="486"  y="768" width="150" height="76" rx="16" fill="url(#tagA)"/>
+    <text x="561"  y="814">模拟面试</text>
+    <rect x="654"  y="768" width="150" height="76" rx="16" fill="url(#tagB)"/>
+    <text x="729"  y="814">竞争力分析</text>
+    <rect x="822"  y="768" width="150" height="76" rx="16" fill="url(#tagA)"/>
+    <text x="897"  y="814">面试复盘</text>
+    <rect x="990"  y="768" width="150" height="76" rx="16" fill="url(#tagB)"/>
+    <text x="1065" y="814">岗位内推</text>
+    <rect x="1158" y="768" width="150" height="76" rx="16" fill="url(#tagA)"/>
+    <text x="1233" y="814">课程学习</text>
+    <rect x="1326" y="768" width="150" height="76" rx="16" fill="url(#tagB)"/>
+    <text x="1401" y="814">消息通知</text>
+  </g>
+</svg>
