@@ -47,30 +47,30 @@
   <g>
     <rect x="1198" y="352" width="330" height="116" rx="24" fill="#e4f8f0"/>
     <circle cx="1254" cy="410" r="28" fill="#299473"/>
-    <path d="M1254 391v38M1235 410h38" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
-    <text x="1308" y="402" font-size="27" font-weight="700" fill="#22765f">学生跟进</text>
-    <text x="1308" y="438" font-size="19" fill="#6b8d81">筛选重点 · 查看详情 · 发送提醒</text>
+    <path d="M1240 401h28v21h-28zM1246 395h16" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+    <text x="1308" y="402" font-size="27" font-weight="700" fill="#22765f">课程</text>
+    <text x="1308" y="438" font-size="19" fill="#6b8d81">推送课程 · 查看班级进度</text>
   </g>
   <g>
     <rect x="520" y="742" width="280" height="104" rx="22" fill="#fff1dc"/>
     <circle cx="570" cy="794" r="25" fill="#d1842d"/>
     <path d="M558 807v-22M570 807v-37M582 807v-28" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
-    <text x="620" y="790" font-size="25" font-weight="700" fill="#9a631f">就业分析</text>
-    <text x="620" y="822" font-size="18" fill="#9a805c">状态分布 · 结果转化</text>
+    <text x="620" y="790" font-size="25" font-weight="700" fill="#9a631f">岗位</text>
+    <text x="620" y="822" font-size="18" fill="#9a805c">校招推荐 · 实习机会</text>
   </g>
   <g>
     <rect x="800" y="742" width="280" height="104" rx="22" fill="#eee8ff"/>
     <circle cx="850" cy="794" r="25" fill="#8065ce"/>
     <path d="M838 802a14 14 0 0 1 24 0M850 785a7 7 0 1 0 0 14 7 7 0 0 0 0-14z" fill="none" stroke="#fff" stroke-width="3"/>
-    <text x="900" y="790" font-size="25" font-weight="700" fill="#6548ad">学习分析</text>
-    <text x="900" y="822" font-size="18" fill="#887ba8">课程完成 · AI 使用</text>
+    <text x="900" y="790" font-size="25" font-weight="700" fill="#6548ad">通知</text>
+    <text x="900" y="822" font-size="18" fill="#887ba8">班级消息 · 定向提醒</text>
   </g>
   <g>
     <rect x="1320" y="690" width="208" height="112" rx="24" fill="#e3f7f5"/>
     <circle cx="1370" cy="746" r="25" fill="#23949a"/>
     <path d="M1358 739h24v19h-24zM1364 734h12" fill="none" stroke="#fff" stroke-width="3"/>
-    <text x="1413" y="744" font-size="24" font-weight="700" fill="#24757a">通知中心</text>
-    <text x="1413" y="776" font-size="17" fill="#6d9291">全班 · 定向提醒</text>
+    <text x="1413" y="744" font-size="24" font-weight="700" fill="#24757a">我的</text>
+    <text x="1413" y="776" font-size="17" fill="#6d9291">教师资料 · 账号设置</text>
   </g>
 
   <text x="800" y="218" font-size="20" fill="#708b80" text-anchor="middle">一套工作台，连接学生端的每一步成长</text>

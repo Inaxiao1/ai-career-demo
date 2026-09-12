@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="688" height="2150" viewBox="0 0 688 2150">
+  <rect width="688" height="2150" fill="#f7f8fb"/>
+  <image xlink:href="jobs.png" width="688" height="1486"/>
+  <rect y="1288" width="688" height="720" fill="#f7f8fb"/>
+  <text x="44" y="1352" fill="#141b2d" font-family="Arial, sans-serif" font-size="27" font-weight="700">更多推荐岗位</text>
+  <text x="548" y="1352" fill="#8c96a5" font-family="Arial, sans-serif" font-size="19">持续更新</text>
+  <rect x="30" y="1380" width="628" height="170" rx="18" fill="#fff" stroke="#e4e8ee"/>
+  <rect x="56" y="1408" width="76" height="76" rx="16" fill="#e9e0ff"/>
+  <text x="76" y="1462" fill="#7052c5" font-family="Arial, sans-serif" font-size="34" font-weight="700">京</text>
+  <text x="158" y="1428" fill="#141b2d" font-family="Arial, sans-serif" font-size="25" font-weight="700">产品运营实习生</text>
+  <text x="158" y="1462" fill="#727e90" font-family="Arial, sans-serif" font-size="19">京东 · 北京 · 实习</text>
+  <rect x="158" y="1480" width="82" height="28" rx="6" fill="#edf3ff"/>
+  <text x="173" y="1501" fill="#4e79ba" font-family="Arial, sans-serif" font-size="16">可转正</text>
+  <rect x="30" y="1570" width="628" height="170" rx="18" fill="#fff" stroke="#e4e8ee"/>
+  <rect x="56" y="1598" width="76" height="76" rx="16" fill="#dceaff"/>
+  <text x="76" y="1652" fill="#3772c5" font-family="Arial, sans-serif" font-size="34" font-weight="700">华</text>
+  <text x="158" y="1618" fill="#141b2d" font-family="Arial, sans-serif" font-size="25" font-weight="700">用户增长专员</text>
+  <text x="158" y="1652" fill="#727e90" font-family="Arial, sans-serif" font-size="19">华为 · 南京 · 校招</text>
+  <rect x="158" y="1670" width="82" height="28" rx="6" fill="#edf3ff"/>
+  <text x="173" y="1691" fill="#4e79ba" font-family="Arial, sans-serif" font-size="16">本科</text>
+  <rect x="30" y="1760" width="628" height="170" rx="18" fill="#fff" stroke="#e4e8ee"/>
+  <rect x="56" y="1788" width="76" height="76" rx="16" fill="#d9f1e8"/>
+  <text x="76" y="1842" fill="#2b9271" font-family="Arial, sans-serif" font-size="34" font-weight="700">小</text>
+  <text x="158" y="1808" fill="#141b2d" font-family="Arial, sans-serif" font-size="25" font-weight="700">数据产品助理</text>
+  <text x="158" y="1842" fill="#727e90" font-family="Arial, sans-serif" font-size="19">小红书 · 上海 · 校招</text>
+  <rect x="158" y="1860" width="82" height="28" rx="6" fill="#edf3ff"/>
+  <text x="173" y="1881" fill="#4e79ba" font-family="Arial, sans-serif" font-size="16">可内推</text>
+  <rect y="2008" width="688" height="142" fill="#fff" stroke="#e3e7ec"/>
+  <g fill="#9aa3ae" font-family="Arial, sans-serif" font-size="17" text-anchor="middle">
+    <text x="68" y="2075">⌂</text><text x="206" y="2075" fill="#2f6fe5">▣</text><text x="344" y="2075">▤</text><text x="482" y="2075">≡</text><text x="620" y="2075">●</text>
+    <text x="68" y="2105">首页</text><text x="206" y="2105" fill="#2f6fe5">岗位</text><text x="344" y="2105">课程</text><text x="482" y="2105">通知</text><text x="620" y="2105">我的</text>
+  </g>
+</svg>

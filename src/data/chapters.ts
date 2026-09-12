@@ -10,6 +10,23 @@ export interface Hotspot {
   label: string
 }
 
+export interface ScrollNote {
+  /** 该批注在自动滚动过程中的出现位置，0-1 表示从开始到结束 */
+  progress: number
+  /** 连线落在手机内容区域的横向位置 */
+  x: number
+  /** 批注放在手机左侧还是右侧 */
+  side?: 'left' | 'right'
+  /** 批注标题 */
+  title: string
+  /** 简短功能说明 */
+  detail: string
+  /** 结构化页面中的真实内容锚点；存在时连线端点跟随该元素。 */
+  anchorSelector?: string
+  /** 长截图中的内容位置，按整张截图高度归一化；用于截图没有 DOM 节点的页面。 */
+  imageY?: number
+}
+
 /** 跨章节跳转目标（章节下标 + 章内步骤下标） */
 export interface JumpTarget {
   chapter: number
@@ -31,6 +48,8 @@ export interface Step {
    * 停住后 clickTarget 才以固定索引点形式亮起。
    */
   autoScroll?: boolean
+  /** 自动滚动过程中，内容到达视觉中心时依次出现的短讲解。 */
+  scrollNotes?: ScrollNote[]
   /**
    * 宽幅图步骤（可选）：不使用手机壳，图片按原比例铺满舞台。
    * 用于「功能总览图」这类横向信息图；与 autoScroll 互斥。
@@ -46,13 +65,27 @@ export interface Step {
     label?: string
     /** 跳转目标（章节 + 步骤） */
     goto: JumpTarget
+    /** 自动滚动结束后，用真实页面元素的位置校准索引球。 */
+    anchorSelector?: string
   }
   /** 学生端完成后的角色承接页；保留在学生流程中，点击后进入教师端。 */
   handoffView?: 'teacher'
+  /** 短页面的点击入口保持原比例，避免聚焦底部导航时遮住页面主体。 */
+  focusZoom?: boolean
   /** 教师端演示使用的结构化界面视图；不依赖截图，便于展示真实操作流程。 */
   teacherView?:
     | 'dashboard'
+    | 'dashboard-overview'
+    | 'dashboard-current'
     | 'dashboard-detail'
+    | 'jobs'
+    | 'job-detail'
+    | 'job-referral'
+    | 'courses'
+    | 'course-detail'
+    | 'course-feedback'
+    | 'notice-feed'
+    | 'notice-detail'
     | 'employment'
     | 'learning'
     | 'students'
@@ -81,6 +114,8 @@ export interface Chapter {
   icon?: string
   /** 侧栏一级分区；缺省视为学生端，教师端单独聚合。 */
   audience?: 'student' | 'teacher'
+  /** 教师端底部导航对应的一级入口；未设置的教师步骤只作为内部引导流程。 */
+  teacherMenu?: 'overview' | 'workbench' | 'jobs' | 'courses' | 'notice'
   steps: Step[]
 }
 
@@ -105,6 +140,107 @@ const ICONS = {
   messages:
     '<path d="M18 8.5a6 6 0 0 0-12 0c0 6.5-2.5 8.5-2.5 8.5h17S18 15 18 8.5"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
 }
+
+const STUDENT_SCROLL_NOTES = {
+  planning: [
+    { progress: 0.14, x: 28, imageY: 0.24, title: '填写基本信息', detail: '输入姓名和专业，建立求职规划的基础信息。' },
+    { progress: 0.48, x: 72, imageY: 0.51, title: '补充经历与期望', detail: '填写实习、校园经历和期望薪资，让规划更贴合你。' },
+    { progress: 0.95, x: 50, imageY: 0.97, title: '提交规划信息', detail: '完善学校类型和目标条件，点击底部生成求职规划。' },
+  ] satisfies ScrollNote[],
+  resume: [
+    { progress: 0.14, x: 30, imageY: 0.15, title: '填写基本信息', detail: '录入姓名、联系方式和毕业信息，建立简历基础。' },
+    { progress: 0.48, x: 70, imageY: 0.48, title: '补充经历模块', detail: '继续完善求职期望、教育、工作和社团经历。' },
+    { progress: 0.95, x: 50, imageY: 0.96, title: '生成附件简历', detail: '检查其他补充信息，点击底部生成可投递的简历文件。' },
+  ] satisfies ScrollNote[],
+  interview: [
+    { progress: 0.14, x: 28, imageY: 0.25, title: '填写面试信息', detail: '输入公司、岗位和岗位要求，确定模拟场景。' },
+    { progress: 0.48, x: 72, imageY: 0.54, title: '补充求职信息', detail: '填写过往公司、项目经历和核心技能，让设置更完整。' },
+    { progress: 0.95, x: 50, imageY: 0.96, title: '上传简历并开始', detail: '上传简历后，可选择电话面试或文字面试开始练习。' },
+  ] satisfies ScrollNote[],
+  competitiveness: [
+    { progress: 0.16, x: 28, imageY: 0.2, title: '填写基本信息', detail: '录入姓名、目标岗位和当前岗位，建立评估基础。' },
+    { progress: 0.5, x: 72, imageY: 0.55, title: '填写能力信息', detail: '补充核心技能、学历背景和个人优势。' },
+    { progress: 0.95, x: 50, imageY: 0.96, title: '提交竞争力分析', detail: '完成表单后点击底部按钮，开始生成竞争力分析。' },
+  ] satisfies ScrollNote[],
+  review: [
+    { progress: 0.2, x: 30, title: '了解评估背景', detail: '查看团队经验与真实语料训练说明，了解面评依据。' },
+    { progress: 0.52, x: 70, title: '上传录音文件', detail: '上传已有面试录音，让 AI 按题目复盘表达和表现。' },
+    { progress: 0.82, x: 50, title: '选择复盘方式', detail: '可实时录音或补充简历，开始一次完整面试复盘。' },
+  ] satisfies ScrollNote[],
+  course: [
+    { progress: 0.18, x: 28, imageY: 0.15, title: '了解课程目标', detail: '先看课程简介，明确这门课覆盖的求职主题。' },
+    { progress: 0.5, x: 72, imageY: 0.5, title: '查看章节目录', detail: '浏览 8 个章节和完成状态，掌握课程学习结构。' },
+    { progress: 0.95, x: 50, imageY: 0.96, title: '阅读当前章节', detail: '查看本章内容和行动建议，完成后点击底部按钮。' },
+  ] satisfies ScrollNote[],
+} as const
+
+const TEACHER_SCROLL_NOTES = {
+  dashboard: [
+    { progress: 0.14, x: 28, title: '先看班级概况', detail: '快速掌握人数、结果和平均学习进度。', anchorSelector: '.teacher-metrics' },
+    { progress: 0.48, x: 72, title: '定位工作入口', detail: '从工作台进入班级看板，集中查看全班状态。', anchorSelector: '.teacher-action-card.primary' },
+    { progress: 0.82, x: 50, title: '发现待跟进学生', detail: '结合最近动态判断谁需要优先介入。', anchorSelector: '.teacher-workbench-flow' },
+  ] satisfies ScrollNote[],
+  board: [
+    { progress: 0.16, x: 28, title: '看整体进度', detail: '用班级进度和变化趋势判断当前状态。', anchorSelector: '.teacher-detail-hero' },
+    { progress: 0.5, x: 72, title: '找重点学生', detail: '按就业结果和学习进度快速筛出重点对象。', anchorSelector: '.teacher-dashboard-detail .teacher-student-row' },
+    { progress: 0.84, x: 50, title: '转成跟进行动', detail: '从看板进入就业进度，继续查看班级转化。', anchorSelector: '.teacher-analysis-entry' },
+  ] satisfies ScrollNote[],
+  employment: [
+    { progress: 0.18, x: 28, title: '分层看结果', detail: '区分面试、实习和已有结果，掌握转化阶段。', anchorSelector: '.teacher-insight-card' },
+    { progress: 0.5, x: 72, title: '看班级趋势', detail: '用状态分布判断资源应该投向哪一类学生。', anchorSelector: '.teacher-chart' },
+    { progress: 0.82, x: 50, title: '进入下一步', detail: '就业进度看完后，从底部岗位继续发现机会。', anchorSelector: '.teacher-bottom-nav span:nth-child(2)' },
+  ] satisfies ScrollNote[],
+  jobs: [
+    { progress: 0.16, x: 28, title: '筛选机会', detail: '在校招和实习推荐之间切换，快速缩小范围。', anchorSelector: '.teacher-job-tabs' },
+    { progress: 0.5, x: 72, title: '查看岗位匹配', detail: '结合地点、专业和福利标签判断是否适合学生。', anchorSelector: '.teacher-search' },
+    { progress: 0.84, x: 50, title: '进入岗位详情', detail: '查看职责与内推条件，为学生推荐合适机会。', anchorSelector: '.teacher-job-card.featured' },
+  ] satisfies ScrollNote[],
+  jobDetail: [
+    { progress: 0.18, x: 28, title: '先看岗位待遇', detail: '先确认薪资、学历和地点，判断基本匹配度。', anchorSelector: '.teacher-job-detail-hero' },
+    { progress: 0.5, x: 72, title: '理解岗位职责', detail: '结合技能标签，帮助学生明确准备重点。', anchorSelector: '.teacher-job-detail-page .teacher-detail-block' },
+    { progress: 0.82, x: 50, title: '查看教师提示', detail: '确认推荐建议和内推入口，再进入内推要求。', anchorSelector: '.teacher-detail-actions' },
+  ] satisfies ScrollNote[],
+  referral: [
+    { progress: 0.18, x: 28, title: '确认推荐条件', detail: '先核对学历、专业和相关经历是否满足要求。', anchorSelector: '.teacher-referral-list' },
+    { progress: 0.5, x: 72, title: '准备推荐材料', detail: '整理简历、成绩单和作品集，减少提交遗漏。', anchorSelector: '.teacher-referral-note' },
+    { progress: 0.82, x: 50, title: '完成岗位浏览', detail: '确认截止时间后，从底部课程继续教学管理。', anchorSelector: '.teacher-bottom-nav span:nth-child(3)' },
+  ] satisfies ScrollNote[],
+  courses: [
+    { progress: 0.16, x: 28, title: '看教学概况', detail: '快速了解推送课程、班级平均进度和待跟进人数。', anchorSelector: '.teacher-course-metrics' },
+    { progress: 0.5, x: 72, title: '执行教学动作', detail: '从班级进度和学习提醒入口直接推动课程完成。', anchorSelector: '.teacher-courses-page .teacher-action-grid' },
+    { progress: 0.84, x: 50, title: '管理推送课程', detail: '打开课程详情，查看章节完成和低进度学生。', anchorSelector: '.teacher-course-card.featured' },
+  ] satisfies ScrollNote[],
+  courseDetail: [
+    { progress: 0.18, x: 28, title: '看课程进度', detail: '确认班级整体完成度，判断课程推进是否正常。' },
+    { progress: 0.5, x: 72, title: '定位卡点章节', detail: '按章节查看完成情况，找到需要提醒的学习环节。' },
+    { progress: 0.82, x: 50, title: '发出学习提醒', detail: '把低进度结果转成行动，及时通知对应学生。' },
+  ] satisfies ScrollNote[],
+  courseFeedback: [
+    { progress: 0.18, x: 28, title: '先看班级概况', detail: '先确认班级人数、已开始和已完成，判断课程推进情况。', anchorSelector: '.teacher-feedback-stats' },
+    { progress: 0.5, x: 72, title: '定位未开始学生', detail: '未开始名单会直接出现，老师可以查看名单或提醒全部。', anchorSelector: '.teacher-feedback-alert' },
+    { progress: 0.82, x: 50, title: '筛选学习状态', detail: '按未开始、学习中或已完成筛选，再查看单个学生章节进度。', anchorSelector: '.teacher-feedback-filters' },
+  ] satisfies ScrollNote[],
+  noticeFeed: [
+    { progress: 0.16, x: 28, title: '先筛选消息', detail: '按全部、老师通知和系统消息快速找到重点。', anchorSelector: '.teacher-filter' },
+    { progress: 0.5, x: 72, title: '查看通知状态', detail: '看到发送、已读和待查看人数，判断提醒效果。', anchorSelector: '.teacher-notice-stats' },
+    { progress: 0.84, x: 50, title: '继续查看未读通知', detail: '确认未读提醒后，点击通知进入详情。', anchorSelector: '.teacher-notice-feed-card.unread' },
+  ] satisfies ScrollNote[],
+  noticeDetail: [
+    { progress: 0.2, x: 28, title: '读懂通知内容', detail: '查看发送对象和正文，确认提醒是否准确。', anchorSelector: '.teacher-notice-detail-card' },
+    { progress: 0.55, x: 72, title: '追踪阅读效果', detail: '通过送达和已读人数判断班级响应情况。', anchorSelector: '.teacher-notice-read' },
+    { progress: 0.84, x: 50, title: '再次触达学生', detail: '需要补充提醒时，可从详情继续发送通知。', anchorSelector: '.teacher-detail-actions' },
+  ] satisfies ScrollNote[],
+  noticeCompose: [
+    { progress: 0.24, x: 28, title: '选择通知类型', detail: '先区分全班通知和定向提醒，确定触达对象。', anchorSelector: '.teacher-notice-card' },
+    { progress: 0.58, x: 72, title: '查看发布记录', detail: '从最近发布中确认已发送内容和阅读情况。', anchorSelector: '.teacher-notice-history' },
+    { progress: 0.84, x: 50, title: '进入通知编辑器', detail: '选择全班通知后继续填写标题、内容和通知级别。', anchorSelector: '.teacher-notice-card' },
+  ] satisfies ScrollNote[],
+  noticeEditor: [
+    { progress: 0.24, x: 28, title: '填写通知标题', detail: '用简短标题说明本次要完成的任务。', anchorSelector: '.teacher-input' },
+    { progress: 0.58, x: 72, title: '补充通知内容', detail: '写清任务、时间和求助方式，方便学生执行。', anchorSelector: '.teacher-textarea' },
+    { progress: 0.84, x: 50, title: '选择通知级别', detail: '确认普通通知或重要提醒，再进入发送范围。', anchorSelector: '.teacher-priority' },
+  ] satisfies ScrollNote[],
+} as const
 
 export const chapters: Chapter[] = [
   {
@@ -171,9 +307,10 @@ export const chapters: Chapter[] = [
       {
         caption: '求职规划 · AI 定制成长路径',
         detail:
-          '进入求职规划了。这页演示会自动向下滑动，带你完整浏览界面内容：基本信息、经历与期望、AI 生成的阶段式成长路径……滑到底部后停住，「返回总览」索引点随即亮起——点它回到产品总览。',
+          '进入求职规划了。这页演示会自动向下滑动，带你完整浏览基本信息、经历与期望等表单内容，完善后可生成个人求职规划。滑到底部后，「返回总览」索引点随即亮起。',
         image: 'assets/shots/career-planning-full.png',
         autoScroll: true,
+        scrollNotes: STUDENT_SCROLL_NOTES.planning,
         clickTarget: { x: 50, y: 88, label: '返回总览', goto: { chapter: 0, step: 2 } },
       },
     ],
@@ -191,6 +328,7 @@ export const chapters: Chapter[] = [
           '进入简历制作了。这页演示同样会自动向下滑动：基本信息、求职期望、教育/实习/社团经历分区编辑，填完一键生成附件简历。滑到底部停住后，「返回总览」索引点亮起——点它继续下一站。',
         image: 'assets/shots/resume-full.png',
         autoScroll: true,
+        scrollNotes: STUDENT_SCROLL_NOTES.resume,
         clickTarget: { x: 50, y: 88, label: '返回总览', goto: { chapter: 0, step: 3 } },
       },
     ],
@@ -208,6 +346,7 @@ export const chapters: Chapter[] = [
           '进入模拟面试了。这页演示同样会自动向下滑动，完整展示面试设置：公司岗位、岗位要求、求职信息与简历上传。滑到底部停住后，「返回总览」索引点亮起——点它继续探索更多 AI 功能。',
         image: 'assets/shots/ai-interview-full.png',
         autoScroll: true,
+        scrollNotes: STUDENT_SCROLL_NOTES.interview,
         clickTarget: { x: 50, y: 88, label: '返回总览', goto: { chapter: 0, step: 4 } },
       },
     ],
@@ -225,6 +364,7 @@ export const chapters: Chapter[] = [
           '进入竞争力分析了。这页演示会自动向下滑动，完整展示表单：基本信息（姓名、目标岗位、当前岗位、工作年限）与能力信息（核心技能、学历背景、个人优势），填完点底部「开始竞争力分析」，AI 会给出竞争力评估与提升建议。滑到底部停住后，「返回更多功能」索引点亮起——点它继续下一站。',
         image: 'assets/shots/competitiveness-full.png',
         autoScroll: true,
+        scrollNotes: STUDENT_SCROLL_NOTES.competitiveness,
         clickTarget: { x: 50, y: 88, label: '返回更多功能', goto: { chapter: 0, step: 6 } },
       },
     ],
@@ -239,10 +379,17 @@ export const chapters: Chapter[] = [
       {
         caption: '面试复盘 · 你离 offer 只差一次复盘',
         detail:
-          '面试突破器：上传面试录音或实时录音，AI 基于真实语料训练的面评模型逐题复盘，给出评级与改进建议；底部还能进入面试库与个人中心。这页演示会自动向下滑动完整展示，滑到底部停住后「返回总览」索引点亮起，点它回到起点，可随时重新体验。',
-        image: 'assets/shots/interview-review-full.png',
-        autoScroll: true,
-        clickTarget: { x: 50, y: 88, label: '返回总览', goto: { chapter: 0, step: 0 } },
+          '面试突破器支持上传面试录音、实时录音和简历补充，AI 会基于真实语料训练的面评模型逐题复盘。页面内容较短，直接完整呈现后，索引球引导你回到学生首页。',
+        image: 'assets/shots/interview-review-current.png',
+        focusZoom: false,
+        clickTarget: { x: 50, y: 88, label: '回到学生首页', goto: { chapter: 5, step: 1 } },
+      },
+      {
+        caption: '学生首页 · 接下来看看岗位',
+        detail:
+          '面试复盘已经展示完成。回到学生首页后，沿着底部导航继续探索岗位信息与内推机会——索引球会指向「岗位」，点击它开始浏览机会列表。',
+        image: 'assets/shots/home.png',
+        clickTarget: { x: 30, y: 92, label: '点击岗位', goto: { chapter: 6, step: 0 } },
       },
     ],
   },
@@ -254,21 +401,12 @@ export const chapters: Chapter[] = [
     icon: ICONS.jobs,
     steps: [
       {
-        caption: '岗位内推 · 点击岗位卡片',
+        caption: '岗位推荐 · 一眼浏览机会列表',
         detail:
-          '聚合岗位信息与内推资源：顶部在校招/实习推荐间切换，卡片上有公司规模、地点与福利标签。看，第一张「运营专员」卡片上亮起了索引点——点击它。',
+          '从学生首页底部点击「岗位」进入机会列表。校招 / 实习推荐、公司信息、地点与福利标签已经在当前页面完整呈现，看完后索引球引导你进入课程。',
         image: 'assets/shots/jobs.png',
-        clickTarget: { x: 50, y: 32, label: '点击岗位', goto: { chapter: 6, step: 1 } },
-      },
-      {
-        caption: '岗位卡片 · 详情与内推通道',
-        detail:
-          '每张岗位卡片近期持续更新，点击即可查看职位详情与公司介绍，更有内推通道直达，让好机会不再错过。点击「→」继续下一章。',
-        image: 'assets/shots/jobs.png',
-        hotspots: [
-          { x: 17, y: 18, label: '校招 / 实习推荐切换' },
-          { x: 50, y: 32, label: '职位卡片与内推入口' },
-        ],
+        focusZoom: false,
+        clickTarget: { x: 30, y: 92, label: '点击课程', goto: { chapter: 7, step: 0 } },
       },
     ],
   },
@@ -280,40 +418,31 @@ export const chapters: Chapter[] = [
     icon: ICONS.course,
     steps: [
       {
-        caption: '职业课程体系 · 点击课程卡片',
+        caption: '职业课程体系 · 点击课程内容',
         detail:
-          '简历、面试、行业认知等分类课程集中在这里。看，「求职精品课」卡片上亮起了索引点——点击它，进入课程的具体界面看看。',
+          '从岗位页底部点击「课程」进入课程学习。简历、面试、行业认知等分类课程集中在这里，索引球会指向「求职精品课」——点击它查看课程详情。',
         image: 'assets/shots/course-list.png',
-        clickTarget: { x: 38, y: 30, label: '点击课程', goto: { chapter: 7, step: 1 } },
+        clickTarget: { x: 38, y: 30, label: '点击求职精品课', goto: { chapter: 7, step: 1 } },
       },
       {
-        caption: '课程学习 · 章节目录与进度',
+        caption: '课程学习 · 自动浏览章节与进度',
         detail:
-          '进入课程学习了。这页演示会自动向下滑动，完整展示课程界面：课程简介、学习进度条、章节目录与当前章节内容，学完一章点「标记为已完成」。滑到底部停住后，「返回课程列表」索引点亮起——点它退出来，继续下一站。',
+          '进入课程详情后自动滚动展示课程简介、学习进度、章节目录与当前章节内容。完整看完课程界面后，索引球引导你回到课程列表，再点击底部「消息」。',
         image: 'assets/shots/course-detail-full.png',
         autoScroll: true,
-        clickTarget: { x: 50, y: 88, label: '返回课程列表', goto: { chapter: 7, step: 2 } },
+        scrollNotes: STUDENT_SCROLL_NOTES.course,
+        clickTarget: { x: 50, y: 88, label: '回到课程列表', goto: { chapter: 7, step: 2 } },
       },
       {
-        caption: '职业课程体系 · 按章节学习',
+        caption: '课程列表 · 接下来查看消息与动态',
         detail:
-          '回到了课程列表。求职精品课全程跟进校招，在线课堂系统提升求职背景；课程按章节学习并跟踪进度，碎片时间系统提升。接下来点击底部「通知」，看看消息动态。',
+          '课程详情已经展示完成。回到课程列表后，沿着底部导航点击「通知」，继续查看老师发布的求职提醒和系统动态。',
         image: 'assets/shots/course-list.png',
         hotspots: [
           { x: 38, y: 30, label: '求职精品课 · 查看课表' },
           { x: 38, y: 52, label: '在线课堂 · 立即学习' },
         ],
-        clickTarget: { x: 70, y: 92, label: '点击通知', goto: { chapter: 7, step: 3 } },
-      },
-      {
-        caption: '班级通知 · 求职提醒不遗漏',
-        detail:
-          '老师发布的求职提醒与学习任务汇聚在这里：顶部统计老师通知数、待查看数与通知范围，重要节点不错过。点击「→」继续下一章。',
-        image: 'assets/shots/dynamic.png',
-        hotspots: [
-          { x: 50, y: 16, label: '班级通知概览' },
-          { x: 50, y: 50, label: '分类通知列表' },
-        ],
+        clickTarget: { x: 70, y: 92, label: '点击消息与动态', goto: { chapter: 8, step: 0 } },
       },
     ],
   },
@@ -325,29 +454,20 @@ export const chapters: Chapter[] = [
     icon: ICONS.messages,
     steps: [
       {
-        caption: '通知中心 · 点击未读角标',
+        caption: '消息与动态 · 一眼查看提醒',
         detail:
-          '老师的课程安排、秋招材料提醒，以及系统的求职状态提示，统一汇聚在消息中心。看，右上角亮起了一个红色的未读角标——点击它。',
+          '从课程页底部点击「消息」进入消息中心。未读提醒、教师通知和系统消息已经在当前页面完整呈现，看完后承接到教师端功能总览。',
         image: 'assets/shots/messages.png',
-        clickTarget: { x: 92, y: 16, label: '点击角标', goto: { chapter: 8, step: 1 } },
+        focusZoom: false,
+        clickTarget: { x: 70, y: 92, label: '继续看教师端', goto: { chapter: 8, step: 1 } },
       },
       {
-        caption: '消息中心 · 未读提醒与分类',
-        detail:
-          '未读数量角标提醒你有多少消息待查看；列表按「师」与「系」区分教师通知和系统通知，重要节点不错过。看完学生端的完整闭环后，下一步一起看看老师如何跟进这些状态。',
-        image: 'assets/shots/messages.png',
-        hotspots: [
-          { x: 92, y: 16, label: '未读数量角标' },
-          { x: 50, y: 47, label: '教师 / 系统通知分类' },
-        ],
-      },
-      {
-        caption: '学生端完成 · 接下来看看教师端',
+        caption: '学生端完成 · 进入教师端功能总览',
         detail:
           '学生端的规划、求职、学习和消息体验到这里完成。教师端接着使用同一批班级数据，从班级看板开始跟进重点学生、查看就业和学习进度，再发出提醒。点击「进入教师端」，按步骤继续浏览。',
         image: 'assets/shots/messages.png',
         handoffView: 'teacher',
-        clickTarget: { x: 50, y: 74, label: '进入教师端', goto: { chapter: 9, step: 0 } },
+        clickTarget: { x: 50, y: 74, label: '进入教师端', goto: { chapter: 14, step: 0 } },
       },
     ],
   },
@@ -596,6 +716,229 @@ export const chapters: Chapter[] = [
           '赵同学已收到定向提醒。教师端的完整操作链路到这里闭环：看班级数据、定位学生、关注跟进，再把行动落实到消息。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'notice-targeted-sent',
+      },
+    ],
+  },
+  // 教师端一级入口严格对应小程序底部导航；旧的分析/跟进章节保留为工作台内部数据，未加入侧栏。
+  {
+    id: 'teacher-overview-route',
+    title: '教师端功能总览',
+    subtitle: '工作台 · 岗位 · 课程 · 通知',
+    audience: 'teacher',
+    teacherMenu: 'overview',
+    icon: ICONS.overview,
+    steps: [
+      {
+        caption: '教师端功能总览 · 四个入口，一套工作流',
+        detail:
+          '教师端按照小程序底部导航顺序展开：先在工作台看班级状态，再到岗位寻找机会、到课程管理学习进度，最后用通知完成班级沟通。点击中心索引点，进入第一个入口「工作台」。',
+        image: 'assets/shots/teacher-overview.svg',
+        stageImage: true,
+        clickTarget: { x: 50, y: 49, label: '进入工作台', goto: { chapter: 15, step: 0 } },
+      },
+    ],
+  },
+  {
+    id: 'teacher-workbench-route',
+    title: '工作台',
+    subtitle: '班级数据与就业进度',
+    audience: 'teacher',
+    teacherMenu: 'workbench',
+    icon: ICONS.overview,
+    steps: [
+      {
+        caption: '工作台内容总览 · 先建立全局视角',
+        detail:
+          '教师工作台先汇总班级学生数、待关注人数、Offer / 入职结果和平均学习进度；下方再提供班级看板、发布通知和完整工作台入口。先看清这三个层次，再进入具体模块。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'dashboard-overview',
+        autoScroll: true,
+        scrollNotes: TEACHER_SCROLL_NOTES.dashboard,
+        clickTarget: { x: 28, y: 68, label: '点击班级看板', anchorSelector: '.teacher-action-card.primary', goto: { chapter: 15, step: 1 } },
+      },
+      {
+        caption: '班级看板详情 · 从班级数据找重点',
+        detail:
+          '点击工作台首页的「班级看板」后，详情页自动滚动展示就业状态、重点学生、班级建议和最近动态。看完班级全貌后，索引球指向「就业进度」标签，点击继续查看工作台内部维度。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'dashboard-detail',
+        autoScroll: true,
+        scrollNotes: TEACHER_SCROLL_NOTES.board,
+        clickTarget: { x: 50, y: 82, label: '点击就业进度', anchorSelector: '.teacher-analysis-entry', goto: { chapter: 15, step: 2 } },
+      },
+      {
+        caption: '工作台 · 就业进度',
+        detail:
+          '就业进度是工作台里的最后一个展示维度：按已关注、面试中、实习中和已有结果查看班级转化。页面自动滚动展示完整数据后，索引球从底部导航指向「岗位」，点击进入岗位推荐。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'employment',
+        autoScroll: true,
+        scrollNotes: TEACHER_SCROLL_NOTES.employment,
+        clickTarget: { x: 30, y: 92, label: '点击下方岗位', anchorSelector: '.teacher-bottom-nav span:nth-child(2)', goto: { chapter: 16, step: 0 } },
+      },
+    ],
+  },
+  {
+    id: 'teacher-jobs-route',
+    title: '岗位',
+    subtitle: '校招推荐与实习机会',
+    audience: 'teacher',
+    teacherMenu: 'jobs',
+    icon: ICONS.jobs,
+    steps: [
+      {
+        caption: '岗位首页 · 校招与实习推荐',
+        detail:
+          '按照小程序底部导航，点击「岗位」进入机会列表。页面自动滚动展示校招 / 实习切换、搜索、岗位标签和多张推荐卡片，滚动完成后索引球指向运营专员岗位，点击查看详情。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'jobs',
+        autoScroll: true,
+        scrollNotes: TEACHER_SCROLL_NOTES.jobs,
+        clickTarget: { x: 50, y: 46, label: '点击运营专员', anchorSelector: '.teacher-job-card.featured', goto: { chapter: 16, step: 1 } },
+      },
+      {
+        caption: '岗位详情 · 查看要求与内推',
+        detail:
+          '岗位详情自动滚动展示薪资、岗位职责、技能标签和教师推荐提示。索引球指向岗位详情里的「查看内推要求」，点击后继续查看岗位内推流程，不会跳离岗位模块。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'job-detail',
+        autoScroll: true,
+        scrollNotes: TEACHER_SCROLL_NOTES.jobDetail,
+        clickTarget: { x: 68, y: 71, label: '查看内推要求', anchorSelector: '.teacher-detail-actions button:last-child', goto: { chapter: 16, step: 2 } },
+      },
+      {
+        caption: '岗位内推要求 · 推荐前确认条件',
+        detail:
+          '内推要求仍然属于岗位流程：这里展示学历、专业、材料和截止时间，教师可以确认条件后再为班级学生推荐。岗位展示完成后，索引球从底部导航指向「课程」，点击继续浏览课程教学。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'job-referral',
+        autoScroll: true,
+        scrollNotes: TEACHER_SCROLL_NOTES.referral,
+        clickTarget: { x: 50, y: 92, label: '点击下方课程', anchorSelector: '.teacher-bottom-nav span:nth-child(3)', goto: { chapter: 17, step: 0 } },
+      },
+    ],
+  },
+  {
+    id: 'teacher-courses-route',
+    title: '课程',
+    subtitle: '课程教学与班级进度',
+    audience: 'teacher',
+    teacherMenu: 'courses',
+    icon: ICONS.course,
+    steps: [
+      {
+        caption: '课程首页 · 教学工作与班级进度',
+        detail:
+          '点击教师端底部「课程」进入课程教学。页面自动滚动展示推送课程统计、班级平均进度、查看班级进度、发布学习提醒和老师推送课程列表，完成后索引球指向大学生求职通识课，点击查看班级反馈。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'courses',
+        autoScroll: true,
+        scrollNotes: TEACHER_SCROLL_NOTES.courses,
+        clickTarget: { x: 50, y: 58, label: '点击大学生求职通识课', anchorSelector: '.teacher-course-card.featured', goto: { chapter: 17, step: 1 } },
+      },
+      {
+        caption: '课程详情 · 章节与学习分层',
+        detail:
+          '课程详情自动滚动展示班级学习进度、章节完成情况和低进度学生提醒。索引球指向教师行动建议，点击后进入通知，把课程数据转成学习提醒。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'course-feedback',
+        autoScroll: true,
+        scrollNotes: TEACHER_SCROLL_NOTES.courseFeedback,
+        clickTarget: { x: 78, y: 72, label: '提醒全部', anchorSelector: '.teacher-feedback-remind', goto: { chapter: 18, step: 0 } },
+      },
+    ],
+  },
+  {
+    id: 'teacher-notice-route',
+    title: '通知',
+    subtitle: '班级通知与定向提醒',
+    audience: 'teacher',
+    teacherMenu: 'notice',
+    icon: ICONS.messages,
+    steps: [
+      {
+        caption: '通知首页 · 查看班级消息',
+        detail:
+          '点击教师端底部「通知」进入班级通知列表。页面自动滚动展示通知统计、全部 / 老师通知 / 系统消息筛选和最近消息，滚动到底部后索引球指向一条未读通知，点击查看详情。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-feed',
+        autoScroll: true,
+        scrollNotes: TEACHER_SCROLL_NOTES.noticeFeed,
+        clickTarget: { x: 50, y: 46, label: '点击未读通知', anchorSelector: '.teacher-notice-feed-card.unread', goto: { chapter: 18, step: 1 } },
+      },
+      {
+        caption: '通知详情 · 送达与已读状态',
+        detail:
+          '通知详情自动展示发送对象、通知正文、送达人数和已读人数。索引球指向「再次发送」操作，点击后进入通知编辑器。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-detail',
+        autoScroll: true,
+        scrollNotes: TEACHER_SCROLL_NOTES.noticeDetail,
+        clickTarget: { x: 68, y: 71, label: '再次发送', anchorSelector: '.teacher-detail-actions button:last-child', goto: { chapter: 18, step: 2 } },
+      },
+      {
+        caption: '发布通知 · 编辑提醒内容',
+        detail:
+          '从通知详情继续点击「再次发送」，进入发布通知入口。页面自动展示全班通知与定向提醒两种发送方式，索引球指向全班通知，点击编辑内容。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice',
+        autoScroll: true,
+        scrollNotes: TEACHER_SCROLL_NOTES.noticeCompose,
+        clickTarget: { x: 50, y: 37, label: '打开通知编辑器', anchorSelector: '.teacher-notice-card', goto: { chapter: 18, step: 3 } },
+      },
+      {
+        caption: '通知编辑器 · 标题、内容与级别',
+        detail:
+          '编辑器自动展示通知标题、正文和普通 / 重要提醒级别，点击底部按钮进入发送范围确认。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-compose',
+        autoScroll: true,
+        scrollNotes: TEACHER_SCROLL_NOTES.noticeEditor,
+        clickTarget: { x: 50, y: 73, label: '选择发送范围', anchorSelector: '.teacher-send-button', goto: { chapter: 18, step: 4 } },
+      },
+      {
+        caption: '发送范围 · 确认全班通知',
+        detail:
+          '发送范围页自动展示全班学生与重点学生选项，确认对象后点击发送，完成从查看消息到发出行动的闭环。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-target',
+        autoScroll: true,
+        clickTarget: { x: 50, y: 72, label: '确认发送', anchorSelector: '.teacher-send-button', goto: { chapter: 18, step: 5 } },
+      },
+      {
+        caption: '通知已发送 · 回到工作台',
+        detail:
+          '通知已经送达班级。点击索引球回到工作台，继续观察学生的就业和学习变化。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-sent',
+        autoScroll: true,
+        clickTarget: { x: 50, y: 76, label: '回到工作台', anchorSelector: '.teacher-success-next', goto: { chapter: 15, step: 0 } },
+      },
+      {
+        caption: '定向提醒 · 发送给重点学生',
+        detail:
+          '教师也可以从学生详情发送定向提醒。编辑器会自动带入赵同学，继续选择发送对象并确认即可。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-compose-targeted',
+        autoScroll: true,
+        clickTarget: { x: 50, y: 73, label: '选择发送对象', anchorSelector: '.teacher-send-button', goto: { chapter: 18, step: 6 } },
+      },
+      {
+        caption: '定向提醒 · 确认发送对象',
+        detail:
+          '发送前明确显示赵同学这一位接收人，确认后提醒会送达学生端消息中心。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-targeted',
+        autoScroll: true,
+        clickTarget: { x: 50, y: 72, label: '确认发送提醒', anchorSelector: '.teacher-send-button', goto: { chapter: 18, step: 7 } },
+      },
+      {
+        caption: '定向提醒已发送 · 跟进完成',
+        detail:
+          '赵同学已收到定向提醒。教师端完成了看数据、找重点、做跟进、发通知的完整闭环。',
+        image: 'assets/shots/teacher-dashboard.png',
+        teacherView: 'notice-targeted-sent',
+        autoScroll: true,
       },
     ],
   },

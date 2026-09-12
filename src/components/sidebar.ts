@@ -34,28 +34,9 @@ function groupHtml(label: string, items: string, className = ''): string {
     </div>`
 }
 
-export function createSidebar(root: HTMLElement, player: Player): void {
-  const overview = chapters
-    .map((c, i) => ({ c, i }))
-    .filter((x) => x.c.audience !== 'teacher' && !x.c.group)
-    .map((x) => itemHtml(x.c, x.i))
-    .join('')
-  const ai = chapters
-    .map((c, i) => ({ c, i }))
-    .filter((x) => x.c.audience !== 'teacher' && x.c.group === 'ai')
-    .map((x) => itemHtml(x.c, x.i))
-    .join('')
-  const core = chapters
-    .map((c, i) => ({ c, i }))
-    .filter((x) => x.c.audience !== 'teacher' && x.c.group === 'core')
-    .map((x) => itemHtml(x.c, x.i))
-    .join('')
-  const teacher = chapters
-    .map((c, i) => ({ c, i }))
-    .filter((x) => x.c.audience === 'teacher')
-    .map((x) => itemHtml(x.c, x.i))
-    .join('')
+type DemoMode = 'student' | 'teacher'
 
+export function createSidebar(root: HTMLElement, player: Player): void {
   root.innerHTML = `
     <div class="brand">
       <div class="brand-logo">AI</div>
@@ -64,29 +45,110 @@ export function createSidebar(root: HTMLElement, player: Player): void {
         <div class="brand-tag">学生端 · 教师端</div>
       </div>
     </div>
-    <nav class="chapter-list">
-      ${groupHtml('学生端', overview)}
-      ${groupHtml('学生端 · AI 功能', ai)}
-      ${groupHtml('学生端 · 核心功能', core)}
-      ${groupHtml('下一段 · 教师端', teacher, 'teacher-route-group')}
-    </nav>
+    <div class="mode-switch" role="group" aria-label="演示模式">
+      <button class="mode-switch-button active" data-mode="student">
+        <span class="mode-switch-kicker">MODE 01</span>
+        <strong>学生端演示</strong>
+        <small>AI 求职助手</small>
+      </button>
+      <button class="mode-switch-button" data-mode="teacher">
+        <span class="mode-switch-kicker">MODE 02</span>
+        <strong>教师端演示</strong>
+        <small>班级经营工作台</small>
+      </button>
+    </div>
+    <nav class="chapter-list" aria-label="功能导航"></nav>
     <div class="sidebar-foot">
       <span class="foot-dot"></span>
       方向键 ← / → 翻页 · 索引点点击进入
     </div>
   `
 
-  const items = Array.from(
-    root.querySelectorAll<HTMLButtonElement>('.chapter-item')
+  let mode: DemoMode = 'student'
+  const list = root.querySelector<HTMLElement>('.chapter-list')!
+  const modeButtons = Array.from(
+    root.querySelectorAll<HTMLButtonElement>('.mode-switch-button')
   )
-  items.forEach((btn) => {
-    btn.addEventListener('click', () =>
-      player.gotoChapter(Number(btn.dataset.index))
+  let items: HTMLButtonElement[] = []
+
+  const renderNav = () => {
+    const entries = chapters.map((c, i) => ({ c, i }))
+    const navItems = entries.filter((x) =>
+      mode === 'teacher'
+        ? x.c.audience === 'teacher' && x.c.teacherMenu
+        : x.c.audience !== 'teacher'
     )
+
+    if (mode === 'teacher') {
+      list.innerHTML = groupHtml(
+        '教师端 · 功能导航',
+        navItems.map((x) => itemHtml(x.c, x.i)).join(''),
+        'teacher-route-group'
+      )
+    } else {
+      list.innerHTML = [
+        groupHtml(
+          '学生端',
+          navItems
+            .filter((x) => !x.c.group)
+            .map((x) => itemHtml(x.c, x.i))
+            .join('')
+        ),
+        groupHtml(
+          '学生端 · AI 功能',
+          navItems
+            .filter((x) => x.c.group === 'ai')
+            .map((x) => itemHtml(x.c, x.i))
+            .join('')
+        ),
+        groupHtml(
+          '学生端 · 核心功能',
+          navItems
+            .filter((x) => x.c.group === 'core')
+            .map((x) => itemHtml(x.c, x.i))
+            .join('')
+        ),
+      ].join('')
+    }
+
+    items = Array.from(list.querySelectorAll<HTMLButtonElement>('.chapter-item'))
+    items.forEach((btn) => {
+      btn.addEventListener('click', () => player.gotoChapter(Number(btn.dataset.index)))
+    })
+    const current = player.getState()
+    items.forEach((btn) => {
+      const idx = Number(btn.dataset.index)
+      btn.classList.toggle('active', idx === current.chapterIndex)
+      btn.classList.toggle('visited', idx < current.chapterIndex)
+    })
+  }
+
+  const setMode = (nextMode: DemoMode) => {
+    if (mode === nextMode) return
+    mode = nextMode
+    modeButtons.forEach((button) =>
+      button.classList.toggle('active', button.dataset.mode === mode)
+    )
+    renderNav()
+    const targetId = mode === 'teacher' ? 'teacher-overview-route' : 'overview'
+    player.gotoChapter(chapters.findIndex((chapter) => chapter.id === targetId))
+  }
+
+  modeButtons.forEach((button) => {
+    button.addEventListener('click', () => setMode(button.dataset.mode as DemoMode))
   })
+  renderNav()
 
   player.subscribe((state) => {
-    items.forEach((btn, i) => {
+    const stateMode: DemoMode = state.chapter.audience === 'teacher' ? 'teacher' : 'student'
+    if (stateMode !== mode) {
+      mode = stateMode
+      modeButtons.forEach((button) =>
+        button.classList.toggle('active', button.dataset.mode === mode)
+      )
+      renderNav()
+    }
+    items.forEach((btn) => {
       const idx = Number(btn.dataset.index)
       btn.classList.toggle('active', idx === state.chapterIndex)
       btn.classList.toggle('visited', idx < state.chapterIndex)
