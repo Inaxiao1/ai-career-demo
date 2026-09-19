@@ -974,7 +974,8 @@ body::after {
 .phone-notch { background: #c4ceda; }
 .phone-screen { background: #f7f9fc; border-color: #cbd6e2; }
 .phone-screen::after { border-color: rgba(255,255,255,.8); }
-.hotspot-cta { border-color: #4f83c2; background: rgba(255,255,255,.92); box-shadow: 0 0 0 5px rgba(79,131,194,.15), 0 5px 13px rgba(79,131,194,.24); }
+.student-screen .phone-shot { width: 100%; height: auto; object-fit: initial; }
+.hotspot-cta { border: 0; border-radius: 50%; background: transparent; box-shadow: none; }
 .hotspot-cta .cta-ring { border-color: #7ca8d2; }
 .cta-label, .hotspot-label { background: #fff; border-color: #d5e1ed; color: #385879; box-shadow: 0 5px 14px rgba(49, 75, 103, .12); }
 .hotspot-pin { background: #4f83c2; box-shadow: 0 0 0 4px rgba(79,131,194,.14); }
