@@ -260,7 +260,7 @@ export const chapters: Chapter[] = [
       {
         caption: '① 求职规划 · 点击卡片进入',
         detail:
-          '这是一款面向大学生与职场新人的 AI 职业助手。首页「AI功能」区第一张卡片上亮起了弹动索引点——点击它，进入 AI 定制成长路径。',
+          '首页先展示 AI 功能区，第一张卡片是「求职规划」：点击它进入定制求职路径，完成后还能从首页继续查看准备路径和岗位、课程推荐。',
         image: 'assets/shots/home.png',
         clickTarget: { x: 20, y: 47, goto: { chapter: 1, step: 0 } },
       },
@@ -300,7 +300,7 @@ export const chapters: Chapter[] = [
   {
     id: 'career-planning',
     title: '求职规划',
-    subtitle: 'AI 定制成长路径',
+    subtitle: '定制求职路径',
     group: 'ai',
     icon: ICONS.planning,
     steps: [
@@ -318,7 +318,7 @@ export const chapters: Chapter[] = [
   {
     id: 'resume',
     title: '简历制作',
-    subtitle: '结构化编辑与 AI 润色',
+    subtitle: '专业简历制作',
     group: 'ai',
     icon: ICONS.resume,
     steps: [
@@ -336,7 +336,7 @@ export const chapters: Chapter[] = [
   {
     id: 'ai-interview',
     title: '模拟面试',
-    subtitle: 'AI 真人模拟面试',
+    subtitle: 'AI真人模拟面试',
     group: 'ai',
     icon: ICONS.interview,
     steps: [
