@@ -245,9 +245,11 @@ function renderStudentView(root: HTMLElement, step: Step, player: Player): void 
   const cta = step.clickTarget
   const auto = !!step.autoScroll
   const spots = (step.hotspots ?? []).map((h, i) => `<div class="hotspot${edgeClass(h.x)}" style="left:${h.x}%;top:${h.y}%"><span class="hotspot-pin"><i class="hotspot-num">${i + 1}</i></span><span class="hotspot-label">${h.label}</span></div>`).join('')
-  // 学生端直接使用原始小程序截图，保留 688px 设计稿的组件比例；
-  // 演示层只负责手机裁切、滚动和引导，不再用 HTML 重绘页面内容。
-  root.innerHTML = `<div class="phone student-phone ${auto ? 'student-auto-phone auto-scroll' : ''}"><div class="phone-notch"></div><div class="phone-screen student-screen"><div class="student-scroll-canvas"><img class="phone-shot" src="${step.image}" alt="小程序学生端页面" draggable="false" /></div><div class="hotspot-layer">${spots}${!auto && cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div><div class="pin-layer">${auto && cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div></div></div>${step.scrollNotes?.length ? scrollNotesHtml(step.scrollNotes) : ''}`
+  // 学生端使用当前版本的结构化界面，避免复用仓库中已经过时的截图资源。
+  // 手机壳只负责固定视口和滚动，页面内部按同一套设计尺寸绘制。
+  root.innerHTML = auto
+    ? `<div class="phone student-phone student-auto-phone"><div class="phone-notch"></div><div class="phone-screen student-screen"><div class="student-scroll-canvas">${studentViewMarkup(step.studentView!)}</div><div class="hotspot-layer">${spots}</div><div class="pin-layer">${cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div></div></div>${step.scrollNotes?.length ? scrollNotesHtml(step.scrollNotes) : ''}`
+    : `<div class="phone student-phone"><div class="phone-notch"></div><div class="phone-screen student-screen">${studentViewMarkup(step.studentView!)}<div class="hotspot-layer">${spots}${cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div></div></div>`
   const phone = root.querySelector<HTMLElement>('.phone')!
   const screen = root.querySelector<HTMLElement>('.phone-screen')!
   const btn = root.querySelector<HTMLButtonElement>('.hotspot-cta')
@@ -259,8 +261,7 @@ function renderStudentView(root: HTMLElement, step: Step, player: Player): void 
     return
   }
   const canvas = root.querySelector<HTMLElement>('.student-scroll-canvas')!
-  const image = canvas.querySelector<HTMLImageElement>('.phone-shot')!
-  startImageAutoScroll(screen, canvas, image, step.scrollNotes ?? [], notes, cta ? () => {
+  startAutoScroll(screen, canvas, step.scrollNotes ?? [], notes, cta ? () => {
     if (step.focusZoom === true) applyFocusZoom(phone, cta.x, cta.y)
   } : undefined)
 }
