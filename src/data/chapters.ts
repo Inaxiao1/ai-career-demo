@@ -175,6 +175,11 @@ const STUDENT_SCROLL_NOTES = {
 } as const
 
 const TEACHER_SCROLL_NOTES = {
+  dashboardCurrent: [
+    { progress: 0.18, x: 28, imageY: 0.28, title: '先看教师身份', detail: '确认学校、班级和教师工作台入口。' },
+    { progress: 0.48, x: 72, imageY: 0.48, title: '快速读懂班级数据', detail: '人数、待关注和 Offer 结果集中呈现。' },
+    { progress: 0.82, x: 50, imageY: 0.7, title: '进入班级看板', detail: '从这里打开全班就业与学习进度。' },
+  ] satisfies ScrollNote[],
   dashboard: [
     { progress: 0.14, x: 28, title: '先看班级概况', detail: '快速掌握人数、结果和平均学习进度。', anchorSelector: '.teacher-metrics' },
     { progress: 0.48, x: 72, title: '定位工作入口', detail: '从工作台进入班级看板，集中查看全班状态。', anchorSelector: '.teacher-action-card.primary' },
@@ -204,11 +209,6 @@ const TEACHER_SCROLL_NOTES = {
     { progress: 0.18, x: 28, title: '确认推荐条件', detail: '先核对学历、专业和相关经历是否满足要求。', anchorSelector: '.teacher-referral-list' },
     { progress: 0.5, x: 72, title: '准备推荐材料', detail: '整理简历、成绩单和作品集，减少提交遗漏。', anchorSelector: '.teacher-referral-note' },
     { progress: 0.82, x: 50, title: '完成岗位浏览', detail: '确认截止时间后，从底部课程继续教学管理。', anchorSelector: '.teacher-bottom-nav span:nth-child(3)' },
-  ] satisfies ScrollNote[],
-  courses: [
-    { progress: 0.16, x: 28, title: '看教学概况', detail: '快速了解推送课程、班级平均进度和待跟进人数。', anchorSelector: '.teacher-course-metrics' },
-    { progress: 0.5, x: 72, title: '执行教学动作', detail: '从班级进度和学习提醒入口直接推动课程完成。', anchorSelector: '.teacher-courses-page .teacher-action-grid' },
-    { progress: 0.84, x: 50, title: '管理推送课程', detail: '打开课程详情，查看章节完成和低进度学生。', anchorSelector: '.teacher-course-card.featured' },
   ] satisfies ScrollNote[],
   courseDetail: [
     { progress: 0.18, x: 28, title: '看课程进度', detail: '确认班级整体完成度，判断课程推进是否正常。' },
@@ -749,12 +749,12 @@ export const chapters: Chapter[] = [
       {
         caption: '工作台内容总览 · 先建立全局视角',
         detail:
-          '教师工作台先汇总班级学生数、待关注人数、Offer / 入职结果和平均学习进度；下方再提供班级看板、发布通知和完整工作台入口。先看清这三个层次，再进入具体模块。',
+          '先按小程序当前首页完整浏览教师工作台：学校与教师身份、班级数据、班级看板和发布通知入口依次出现。滚动展示结束后，索引球会准确聚焦真实的「班级看板」，点击进入详情。',
         image: 'assets/shots/teacher-dashboard.png',
-        teacherView: 'dashboard-overview',
+        teacherView: 'dashboard-current',
         autoScroll: true,
-        scrollNotes: TEACHER_SCROLL_NOTES.dashboard,
-        clickTarget: { x: 28, y: 68, label: '点击班级看板', anchorSelector: '.teacher-action-card.primary', goto: { chapter: 15, step: 1 } },
+        scrollNotes: TEACHER_SCROLL_NOTES.dashboardCurrent,
+        clickTarget: { x: 28, y: 68, label: '点击班级看板', anchorSelector: '.teacher-current-board-anchor', goto: { chapter: 15, step: 1 } },
       },
       {
         caption: '班级看板详情 · 从班级数据找重点',
@@ -829,17 +829,16 @@ export const chapters: Chapter[] = [
       {
         caption: '课程首页 · 教学工作与班级进度',
         detail:
-          '点击教师端底部「课程」进入课程教学。页面自动滚动展示推送课程统计、班级平均进度、查看班级进度、发布学习提醒和老师推送课程列表，完成后索引球指向大学生求职通识课，点击查看班级反馈。',
+          '点击教师端底部「课程」进入课程管理。页面按小程序当前结构展示「推荐课程」和「全部课程」两个入口：前者用于学校必修与系统推荐，后者支持分类筛选和课程搜索。看完后点击推荐课程，继续查看班级反馈。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'courses',
-        autoScroll: true,
-        scrollNotes: TEACHER_SCROLL_NOTES.courses,
-        clickTarget: { x: 50, y: 58, label: '点击大学生求职通识课', anchorSelector: '.teacher-course-card.featured', goto: { chapter: 17, step: 1 } },
+        // 当前小程序课程首页只有两个入口和一组摘要，一屏可读完，直接引导点击。
+        clickTarget: { x: 50, y: 36, label: '点击推荐课程', anchorSelector: '.teacher-course-entry.recommended', goto: { chapter: 17, step: 1 } },
       },
       {
         caption: '课程详情 · 章节与学习分层',
         detail:
-          '课程详情自动滚动展示班级学习进度、章节完成情况和低进度学生提醒。索引球指向教师行动建议，点击后进入通知，把课程数据转成学习提醒。',
+          '进入课程详情后，先看课程内容预览，再看班级学习反馈：班级人数、已开始、未开始和已完成都会汇总在同一页；继续向下可以筛选学生并发送学习提醒。',
         image: 'assets/shots/teacher-dashboard.png',
         teacherView: 'course-feedback',
         autoScroll: true,
