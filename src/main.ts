@@ -1,13 +1,11 @@
 import { Player } from './engine/player'
 import { createSidebar } from './components/sidebar'
 import { createPhone, renderPhone } from './components/phone'
-import { createTooltip } from './components/tooltip'
 
 const player = new Player()
 
 createSidebar(document.getElementById('sidebar')!, player)
 createPhone(document.getElementById('stage')!)
-createTooltip(document.getElementById('tooltip')!, player)
 
 player.subscribe((state) => renderPhone(document.getElementById('stage')!, state, player))
 

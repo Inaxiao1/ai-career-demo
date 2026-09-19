@@ -565,6 +565,12 @@ body::after {
   animation-name: cta-bob-edge;
 }
 
+.hotspot-cta.edge-bottom .cta-label {
+  top: auto;
+  bottom: 34px;
+  animation-name: cta-bob-edge;
+}
+
 @keyframes cta-bob-edge {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(3px); }
@@ -1178,4 +1184,104 @@ body::after {
 
 @media (max-width: 760px) {
   .sidebar { border-bottom-color: #e3eaf2; }
+}
+
+/* ===== 沉浸式手机展示布局 =====
+   说明卡不再占用舞台高度；右侧舞台成为完整展示区域，自动滚动页使用
+   左侧放大的手机和右侧批注的固定构图。 */
+.scene {
+  min-height: 100vh;
+  padding: 0;
+  gap: 0;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.glass-card {
+  width: 100vw;
+  height: 100vh;
+  min-height: 0;
+  border-radius: 0;
+}
+
+.stage-wrap {
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+}
+
+.stage {
+  height: 100%;
+  min-height: 0;
+}
+
+.tooltip,
+.scene-footer { display: none; }
+
+.phone {
+  height: 100%;
+  max-height: 100%;
+}
+
+.hotspot-cta {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0;
+}
+
+.scroll-note {
+  width: min(250px, 30%);
+}
+
+.scroll-note.right {
+  right: 24px;
+}
+
+.scroll-note-card {
+  border-color: #a9c4dd;
+  color: #234a70;
+  box-shadow: 0 10px 22px rgba(47, 72, 99, .14);
+}
+
+.scroll-note-card strong { color: #1e4f7b; }
+.scroll-note-card span { color: #365d7f; }
+.scroll-note-connector,
+.scroll-note.right .scroll-note-connector {
+  height: 2px;
+  background: #4d86b5;
+  opacity: .9;
+}
+.scroll-note-connector::after {
+  background: #3f79aa;
+  box-shadow: 0 0 0 4px rgba(63, 121, 170, .16);
+}
+
+@media (max-width: 760px) {
+  .glass-card {
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .stage-wrap {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+  }
+
+  .stage {
+    flex: 1;
+    height: 100%;
+  }
+
+  .phone {
+    height: 100%;
+    max-height: 100%;
+  }
+
+  .scroll-note {
+    width: min(220px, 42%);
+  }
+
+  .scroll-note.right { right: 8px; }
 }

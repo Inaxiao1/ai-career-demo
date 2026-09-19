@@ -156,34 +156,34 @@ const ICONS = {
 
 const STUDENT_SCROLL_NOTES = {
   planning: [
-    { progress: 0.14, x: 28, imageY: 0.24, title: '填写基本信息', detail: '输入姓名和专业，建立求职规划的基础信息。' },
-    { progress: 0.48, x: 72, imageY: 0.51, title: '补充经历与期望', detail: '填写实习、校园经历和期望薪资，让规划更贴合你。' },
-    { progress: 0.95, x: 50, imageY: 0.97, title: '提交规划信息', detail: '完善学校类型和目标条件，点击底部生成求职规划。' },
+    { progress: 0.14, x: 28, title: '让 AI 生成专属路径', detail: '补充目标岗位、经历和期待，系统会据此生成更贴合你的求职规划。', anchorSelector: '.student-planning-basic' },
+    { progress: 0.48, x: 72, title: '把经历变成规划依据', detail: '导入简历或补充项目、校园经历，让 AI 判断你的优势和准备重点。', anchorSelector: '.student-planning-expectations' },
+    { progress: 0.95, x: 50, title: '从目标进入执行', detail: '确认薪资、学校类型等条件后，生成可继续执行的求职成长路径。', anchorSelector: '.student-planning-submit' },
   ] satisfies ScrollNote[],
   resume: [
-    { progress: 0.14, x: 30, imageY: 0.15, title: '填写基本信息', detail: '录入姓名、联系方式和毕业信息，建立简历基础。' },
-    { progress: 0.48, x: 70, imageY: 0.48, title: '补充经历模块', detail: '继续完善求职期望、教育、工作和社团经历。' },
-    { progress: 0.95, x: 50, imageY: 0.96, title: '生成附件简历', detail: '检查其他补充信息，点击底部生成可投递的简历文件。' },
+    { progress: 0.14, x: 30, title: '先确定简历表达风格', detail: '选择适合校招的模板，让后续内容自动保持统一结构。', anchorSelector: '.student-template-grid' },
+    { progress: 0.48, x: 70, title: '把经历组织成亮点', detail: '完善求职目标、教育和实践经历，形成更容易被招聘方理解的简历内容。', anchorSelector: '.student-resume-expectation' },
+    { progress: 0.95, x: 50, title: '生成可投递版本', detail: '检查关键信息后生成附件简历，方便直接用于岗位投递。', anchorSelector: '.student-resume-submit' },
   ] satisfies ScrollNote[],
   interview: [
-    { progress: 0.14, x: 28, imageY: 0.25, title: '填写面试信息', detail: '输入公司、岗位和岗位要求，确定模拟场景。' },
-    { progress: 0.48, x: 72, imageY: 0.54, title: '补充求职信息', detail: '填写过往公司、项目经历和核心技能，让设置更完整。' },
-    { progress: 0.95, x: 50, imageY: 0.96, title: '上传简历并开始', detail: '上传简历后，可选择电话面试或文字面试开始练习。' },
+    { progress: 0.14, x: 28, title: '让 AI 进入真实岗位语境', detail: '输入公司、岗位和岗位要求，让问题围绕目标职位展开。', anchorSelector: '.student-interview-info' },
+    { progress: 0.48, x: 72, title: '补全你的求职背景', detail: '补充项目经历和核心技能，让面试问题更贴近你的实际情况。', anchorSelector: '.student-interview-background' },
+    { progress: 0.95, x: 50, title: '选择练习方式并开始', detail: '上传简历后，可选择电话或文字面试，开始一次完整模拟。', anchorSelector: '.student-interview-upload' },
   ] satisfies ScrollNote[],
   competitiveness: [
-    { progress: 0.16, x: 28, imageY: 0.2, title: '填写基本信息', detail: '录入姓名、目标岗位和当前岗位，建立评估基础。' },
-    { progress: 0.5, x: 72, imageY: 0.55, title: '填写能力信息', detail: '补充核心技能、学历背景和个人优势。' },
-    { progress: 0.95, x: 50, imageY: 0.96, title: '提交竞争力分析', detail: '完成表单后点击底部按钮，开始生成竞争力分析。' },
+    { progress: 0.16, x: 28, title: '建立岗位竞争力画像', detail: '补充目标岗位、学历、技能和优势，系统会从岗位要求出发评估匹配度。', anchorSelector: '.student-competitiveness-basic' },
+    { progress: 0.5, x: 72, title: '找到需要补强的能力', detail: '把项目经验和个人优势交给 AI，对照目标岗位识别准备短板。', anchorSelector: '.student-competitiveness-skills' },
+    { progress: 0.95, x: 50, title: '获得下一步提升建议', detail: '提交完整信息后，生成竞争力分析和针对性的提升方向。', anchorSelector: '.student-competitiveness-submit' },
   ] satisfies ScrollNote[],
   review: [
-    { progress: 0.2, x: 30, title: '了解评估背景', detail: '查看团队经验与真实语料训练说明，了解面评依据。' },
-    { progress: 0.52, x: 70, title: '上传录音文件', detail: '上传已有面试录音，让 AI 按题目复盘表达和表现。' },
-    { progress: 0.82, x: 50, title: '选择复盘方式', detail: '可实时录音或补充简历，开始一次完整面试复盘。' },
+    { progress: 0.2, x: 30, title: '先理解 AI 如何面评', detail: '根据真实面试语料，系统会从表达、逻辑和岗位匹配度给出反馈。' },
+    { progress: 0.52, x: 70, title: '把真实面试交给 AI', detail: '上传已有录音，让系统按题目复盘回答中的表现和卡点。' },
+    { progress: 0.82, x: 50, title: '形成下一次面试策略', detail: '结合录音、简历和面评结果，整理下一次可以直接采用的回答方法。' },
   ] satisfies ScrollNote[],
   course: [
-    { progress: 0.18, x: 28, imageY: 0.15, title: '了解课程目标', detail: '先看课程简介，明确这门课覆盖的求职主题。' },
-    { progress: 0.5, x: 72, imageY: 0.5, title: '查看章节目录', detail: '浏览 8 个章节和完成状态，掌握课程学习结构。' },
-    { progress: 0.95, x: 50, imageY: 0.96, title: '阅读当前章节', detail: '查看本章内容和行动建议，完成后点击底部按钮。' },
+    { progress: 0.18, x: 28, title: '先锁定课程目标', detail: '先看课程简介，明确这门课如何帮助你从认知走到投递。', anchorSelector: '.student-course-hero' },
+    { progress: 0.5, x: 72, title: '用进度找到学习重点', detail: '查看已学章节和当前进度，知道下一步该继续哪一部分。', anchorSelector: '.student-learning-card' },
+    { progress: 0.95, x: 50, title: '按章节继续行动', detail: '结合章节状态安排学习任务，把课程内容转成真实求职准备。', anchorSelector: '.student-chapter-list' },
   ] satisfies ScrollNote[],
 } as const
 
@@ -246,12 +246,12 @@ const TEACHER_SCROLL_NOTES = {
   noticeCompose: [
     { progress: 0.24, x: 28, title: '选择通知类型', detail: '先区分全班通知和定向提醒，确定触达对象。', anchorSelector: '.teacher-notice-card' },
     { progress: 0.58, x: 72, title: '查看发布记录', detail: '从最近发布中确认已发送内容和阅读情况。', anchorSelector: '.teacher-notice-history' },
-    { progress: 0.84, x: 50, title: '进入通知编辑器', detail: '选择全班通知后继续填写标题、内容和通知级别。', anchorSelector: '.teacher-notice-card' },
+    { progress: 0.84, x: 50, title: '把全班提醒变成行动', detail: '确认发送对象后进入编辑器，统一安排任务、时间和求助方式。', anchorSelector: '.teacher-notice-card' },
   ] satisfies ScrollNote[],
   noticeEditor: [
-    { progress: 0.24, x: 28, title: '填写通知标题', detail: '用简短标题说明本次要完成的任务。', anchorSelector: '.teacher-input' },
-    { progress: 0.58, x: 72, title: '补充通知内容', detail: '写清任务、时间和求助方式，方便学生执行。', anchorSelector: '.teacher-textarea' },
-    { progress: 0.84, x: 50, title: '选择通知级别', detail: '确认普通通知或重要提醒，再进入发送范围。', anchorSelector: '.teacher-priority' },
+    { progress: 0.24, x: 28, title: '让提醒一眼说清重点', detail: '用简短标题概括本次任务，让学生打开消息就知道先做什么。', anchorSelector: '.teacher-input' },
+    { progress: 0.58, x: 72, title: '把任务讲成可执行步骤', detail: '写清任务、时间和求助方式，学生可以照着消息完成。', anchorSelector: '.teacher-textarea' },
+    { progress: 0.84, x: 50, title: '用级别提醒优先顺序', detail: '区分普通通知和重要提醒，再进入发送范围确认。', anchorSelector: '.teacher-priority' },
   ] satisfies ScrollNote[],
 } as const
 

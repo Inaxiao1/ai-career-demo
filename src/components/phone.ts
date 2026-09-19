@@ -24,8 +24,9 @@ function edgeClass(x: number): string {
 
 /** 可点击引导索引点：只保留水波纹扩散提示；label 省略时不显示文字 */
 function ctaHtml(x: number, y: number, label?: string): string {
+  const verticalClass = y > 76 ? ' edge-bottom' : y < 24 ? ' edge-top' : ''
   return `
-    <button class="hotspot-cta${edgeClass(x)}" style="left:${x}%;top:${y}%"${label ? ` title="${label}"` : ''}>
+    <button class="hotspot-cta${edgeClass(x)}${verticalClass}" style="left:${x}%;top:${y}%"${label ? ` title="${label}"` : ''}>
       <span class="cta-ring"></span>
       ${label ? `<span class="cta-label">${label}</span>` : ''}
     </button>
@@ -38,17 +39,32 @@ function ctaHtml(x: number, y: number, label?: string): string {
 // 令其为中心（0）即 t = -h，故 tx = (50-x)%、ty = (50-y)%。
 // 手机被放大平移后溢出部分由 .glass-card overflow:hidden 裁掉。
 const FOCUS_ZOOM = 1.5
+const PRESENTATION_ZOOM = 1.55
 
 function applyFocusZoom(phone: HTMLElement, x: number, y: number): void {
+  phone.classList.remove('presentation-focus')
   phone.style.setProperty('--zoom', String(FOCUS_ZOOM))
   phone.style.setProperty('--tx', `${(50 - x).toFixed(1)}%`)
   phone.style.setProperty('--ty', `${(50 - y).toFixed(1)}%`)
+}
+
+/** 自动滚动页固定为“左侧大手机 + 右侧批注”的阅读构图。 */
+function applyPresentationFocus(phone: HTMLElement): void {
+  const stage = phone.closest<HTMLElement>('.stage')
+  const compact = !!stage && stage.clientWidth < 900
+  const zoom = compact ? 1.38 : PRESENTATION_ZOOM
+  const tx = compact ? -23 : -22
+  phone.classList.add('presentation-focus')
+  phone.style.setProperty('--zoom', String(zoom))
+  phone.style.setProperty('--tx', `${tx}%`)
+  phone.style.setProperty('--ty', '0%')
 }
 
 function resetFocusZoom(phone: HTMLElement): void {
   phone.style.setProperty('--zoom', '1')
   phone.style.setProperty('--tx', '0%')
   phone.style.setProperty('--ty', '0%')
+  phone.classList.remove('presentation-focus')
 }
 
 /**
@@ -67,13 +83,14 @@ function alignCtaToAnchor(
 
   const screenRect = screen.getBoundingClientRect()
   const anchorRect = anchor.getBoundingClientRect()
+  if (!screenRect.width || !screenRect.height) return { x: cta.x, y: cta.y }
   const x = Math.max(
-    8,
-    Math.min(92, ((anchorRect.left + anchorRect.width / 2 - screenRect.left) / screen.clientWidth) * 100)
+    4,
+    Math.min(96, ((anchorRect.left + anchorRect.width / 2 - screenRect.left) / screenRect.width) * 100)
   )
   const y = Math.max(
-    8,
-    Math.min(92, ((anchorRect.top + anchorRect.height / 2 - screenRect.top) / screen.clientHeight) * 100)
+    4,
+    Math.min(96, ((anchorRect.top + anchorRect.height / 2 - screenRect.top) / screenRect.height) * 100)
   )
   button.style.left = `${x.toFixed(1)}%`
   button.style.top = `${y.toFixed(1)}%`
@@ -86,7 +103,7 @@ function scrollNotesHtml(notes: NonNullable<Step['scrollNotes']>): string {
       ${notes
         .map(
           (note, i) => `
-            <div class="scroll-note ${note.side ?? (note.x < 50 ? 'left' : 'right')}" data-note-index="${i}">
+            <div class="scroll-note right" data-note-index="${i}">
               <div class="scroll-note-card"><strong>${note.title}</strong><span>${note.detail}</span></div>
               <i class="scroll-note-connector"></i>
             </div>`
@@ -99,7 +116,7 @@ function hideScrollNotes(layer: HTMLElement | null): void {
   layer?.querySelectorAll('.scroll-note').forEach((note) => note.classList.remove('active'))
 }
 
-const SCROLL_NOTE_DISPLAY_MS = 2200
+const SCROLL_NOTE_DISPLAY_MS = 2800
 
 interface ScrollNoteRuntime {
   nextIndex: number
@@ -119,19 +136,30 @@ function updateScrollNotes(
   if (!layer || !notes.length) return
   const noteEls = Array.from(layer.querySelectorAll<HTMLElement>('.scroll-note'))
   const dist = Math.max(0, canvas.scrollHeight - screen.clientHeight)
+  const screenRect = screen.getBoundingClientRect()
+  const screenCenterY = screenRect.top + screenRect.height / 2
   if (runtime.activeIndex >= 0 && now >= runtime.activeUntil) {
     runtime.activeIndex = -1
   }
 
   // 批注按滚动顺序只触发一次，并保持固定展示时长，避免被下一条提前抢占。
-  if (
-    runtime.activeIndex < 0 &&
-    runtime.nextIndex < notes.length &&
-    progress >= notes[runtime.nextIndex].progress
-  ) {
-    runtime.activeIndex = runtime.nextIndex
-    runtime.nextIndex += 1
-    runtime.activeUntil = now + SCROLL_NOTE_DISPLAY_MS
+  if (runtime.activeIndex < 0 && runtime.nextIndex < notes.length) {
+    const candidate = notes[runtime.nextIndex]
+    const candidateAnchor = candidate.anchorSelector
+      ? canvas.querySelector<HTMLElement>(candidate.anchorSelector)
+      : null
+    const candidateRect = candidateAnchor?.getBoundingClientRect()
+    const centered = candidateRect
+      ? Math.abs(candidateRect.top + candidateRect.height / 2 - screenCenterY) <= screenRect.height * 0.2
+      : false
+    const ready = candidateAnchor
+      ? (centered && progress >= Math.max(0, candidate.progress - 0.12)) || progress >= candidate.progress
+      : progress >= candidate.progress
+    if (ready) {
+      runtime.activeIndex = runtime.nextIndex
+      runtime.nextIndex += 1
+      runtime.activeUntil = now + SCROLL_NOTE_DISPLAY_MS
+    }
   }
 
   const activeIndex = runtime.activeIndex
@@ -140,7 +168,6 @@ function updateScrollNotes(
 
   const note = notes[activeIndex]
   const noteEl = noteEls[activeIndex]
-  const screenRect = screen.getBoundingClientRect()
   const layerRect = layer.getBoundingClientRect()
   const anchor = note.anchorSelector
     ? canvas.querySelector<HTMLElement>(note.anchorSelector)
@@ -151,19 +178,17 @@ function updateScrollNotes(
     ? anchorRect.top + anchorRect.height / 2 - screenRect.top
     : note.imageY != null
       ? canvasRect.top + canvasRect.height * note.imageY - screenRect.top
-      : screen.clientHeight / 2 + dist * (note.progress - progress)
+      : screenRect.height / 2 + dist * (note.progress - progress) * (screenRect.height / screen.clientHeight)
   const targetX = anchorRect
     ? anchorRect.left + anchorRect.width / 2
-    : screenRect.left + (screen.clientWidth * note.x) / 100
+    : screenRect.left + (screenRect.width * note.x) / 100
   noteEl.style.top = `${screenRect.top - layerRect.top + targetY}px`
   const card = noteEl.querySelector<HTMLElement>('.scroll-note-card')!
   const cardRect = card.getBoundingClientRect()
-  const onLeft = note.side === 'left' || (!note.side && note.x < 50)
-  const cardEdge = onLeft ? cardRect.right : cardRect.left
   const connector = noteEl.querySelector<HTMLElement>('.scroll-note-connector')!
   connector.style.top = `${screenRect.top - layerRect.top + targetY - cardRect.top}px`
-  connector.style.left = `${Math.min(cardEdge, targetX) - cardRect.left}px`
-  connector.style.width = `${Math.abs(targetX - cardEdge)}px`
+  connector.style.left = `${targetX - cardRect.left}px`
+  connector.style.width = `${Math.max(0, cardRect.left - targetX)}px`
 }
 
 function renderTeacherHandoff(root: HTMLElement, step: Step, player: Player): void {
@@ -220,13 +245,13 @@ function studentViewMarkup(view: NonNullable<Step['studentView']>): string {
     case 'home-more':
       return `${common}<div class="student-banner muted"><small>AI 练习</small><strong>模拟面试</strong><span>练习表达，从容面对每一次提问</span></div><div class="student-more-panel"><div class="student-section-head"><strong>更多功能</strong><b>×</b></div><div class="student-more-grid"><div class="student-feature"><b>▥</b><strong>竞争力分析</strong><small>了解你的求职竞争力</small></div><div class="student-feature"><b>▣</b><strong>面试复盘</strong><small>复盘面试经验提升</small></div></div></div></div>${studentNav()}`
     case 'planning':
-      return `${common}<div class="student-page-title"><small>CAREER PLANNING</small><strong>求职规划</strong><span>填写信息，AI 定制你的成长路径</span></div><div class="student-progress-strip"><b>1</b><span>填写信息</span><i></i><b>2</b><span>生成规划</span><i></i><b>3</b><span>执行路径</span></div><div class="student-form-card"><h3>基本信息</h3>${studentField('姓名', '张同学')}${studentField('专业', '计算机科学与技术')}<div class="student-import-row"><div><strong>导入简历（可选）</strong><small>自动读取实习、项目和校园经历</small></div><b>选择文件</b></div>${studentField('性格', '外向')}${studentField('哪一届毕业', '2026 届')}${studentField('意向岗位', 'AI产品经理')}${studentField('是否期待创业', '否')}</div><div class="student-form-card"><h3>经历与期望</h3>${studentField('相关大厂实习', '0 段')}${studentField('实习 / 项目经历', '校园 AI 求职助手产品设计', true)}${studentField('校园经历与个人优势', '需求分析、数据分析、原型设计', true)}${studentField('毕业后期望薪资', '8-15K')}${studentField('学校类型', '普通本科')}</div><div class="student-submit">生成求职规划</div></div>`
+      return `${common}<div class="student-page-title"><small>CAREER PLANNING</small><strong>求职规划</strong><span>补充目标，AI 定制你的成长路径</span></div><div class="student-progress-strip"><b>1</b><span>建立画像</span><i></i><b>2</b><span>生成规划</span><i></i><b>3</b><span>执行路径</span></div><div class="student-form-card student-planning-basic"><h3>基本信息</h3>${studentField('姓名', '张同学')}${studentField('专业', '计算机科学与技术')}<div class="student-import-row"><div><strong>导入简历（可选）</strong><small>自动读取实习、项目和校园经历</small></div><b>选择文件</b></div>${studentField('性格', '外向')}${studentField('哪一届毕业', '2026 届')}${studentField('意向岗位', 'AI产品经理')}${studentField('是否期待创业', '否')}</div><div class="student-form-card student-planning-expectations"><h3>经历与期望</h3>${studentField('相关大厂实习', '0 段')}${studentField('实习 / 项目经历', '校园 AI 求职助手产品设计', true)}${studentField('校园经历与个人优势', '需求分析、数据分析、原型设计', true)}${studentField('毕业后期望薪资', '8-15K')}${studentField('学校类型', '普通本科')}</div><div class="student-submit student-planning-submit">生成求职规划</div></div>`
     case 'resume':
-      return `${common}<div class="student-page-title"><small>RESUME BUILDER</small><strong>简历制作</strong><span>先选一套版式，再填写你的经历</span></div><div class="student-template-intro"><strong>选择简历模板</strong><small>内容、颜色和段落结构会同步到 PDF</small></div><div class="student-template-grid"><div class="student-template-card selected"><div class="student-template-preview"><b>张同学</b><i></i><i></i><strong>教育经历</strong><i></i><i></i><strong>实践经历</strong><i></i></div><strong>经典蓝白</strong><small>清晰 · 专业 · 适合校招</small></div><div class="student-template-card"><div class="student-template-preview warm"><b>张同学</b><i></i><i></i><strong>项目经历</strong><i></i><i></i><strong>技能证书</strong><i></i></div><strong>简约暖色</strong><small>简洁 · 突出重点</small></div></div><div class="student-form-card"><h3>基本信息</h3>${studentField('姓名', '张同学')}${studentField('联系方式', '138****0001')}${studentField('毕业信息', '江苏理工学院 · 计算机科学与技术')}</div><div class="student-form-card"><h3>求职期望</h3>${studentField('目标岗位', 'AI产品经理')}${studentField('目标城市', '杭州')}${studentField('个人优势', '需求分析、数据分析、原型设计', true)}</div><div class="student-submit">使用此模板并生成简历</div></div>`
+      return `${common}<div class="student-page-title"><small>RESUME BUILDER</small><strong>简历制作</strong><span>先确定表达风格，再整理你的经历</span></div><div class="student-template-intro"><strong>选择简历模板</strong><small>内容、颜色和段落结构会同步到 PDF</small></div><div class="student-template-grid"><div class="student-template-card selected"><div class="student-template-preview"><b>张同学</b><i></i><i></i><strong>教育经历</strong><i></i><i></i><strong>实践经历</strong><i></div><strong>经典蓝白</strong><small>清晰 · 专业 · 适合校招</small></div><div class="student-template-card"><div class="student-template-preview warm"><b>张同学</b><i></i><i></i><strong>项目经历</strong><i></i><i></i><strong>技能证书</strong><i></i></div><strong>简约暖色</strong><small>简洁 · 突出重点</small></div></div><div class="student-form-card student-resume-basic"><h3>基本信息</h3>${studentField('姓名', '张同学')}${studentField('联系方式', '138****0001')}${studentField('毕业信息', '江苏理工学院 · 计算机科学与技术')}</div><div class="student-form-card student-resume-expectation"><h3>求职期望</h3>${studentField('目标岗位', 'AI产品经理')}${studentField('目标城市', '杭州')}${studentField('个人优势', '需求分析、数据分析、原型设计', true)}</div><div class="student-submit student-resume-submit">使用此模板并生成简历</div></div>`
     case 'interview':
-      return `${common}<div class="student-page-title"><small>AI INTERVIEW</small><strong>模拟面试</strong><span>AI 真人模拟面试</span></div><div class="student-form-card"><h3>面试信息</h3>${studentField('公司名称', '字节跳动')}${studentField('目标岗位', '运营专员')}${studentField('岗位要求', '用户运营、活动策划、数据分析', true)}</div><div class="student-form-card"><h3>求职信息</h3>${studentField('过往公司', '暂无')}${studentField('项目经历', '校园活动运营项目')}${studentField('核心技能', '沟通表达、数据分析')}</div><div class="student-upload"><b>↑</b><strong>上传简历</strong><small>支持 PDF / Word 文件</small></div><div class="student-choice"><span>电话面试</span><span class="active">文字面试</span></div><div class="student-submit">开始模拟面试</div></div>`
+      return `${common}<div class="student-page-title"><small>AI INTERVIEW</small><strong>模拟面试</strong><span>让 AI 按目标岗位陪你练习</span></div><div class="student-form-card student-interview-info"><h3>面试信息</h3>${studentField('公司名称', '字节跳动')}${studentField('目标岗位', '运营专员')}${studentField('岗位要求', '用户运营、活动策划、数据分析', true)}</div><div class="student-form-card student-interview-background"><h3>求职信息</h3>${studentField('过往公司', '暂无')}${studentField('项目经历', '校园活动运营项目')}${studentField('核心技能', '沟通表达、数据分析')}</div><div class="student-upload student-interview-upload"><b>↑</b><strong>上传简历</strong><small>支持 PDF / Word 文件</small></div><div class="student-choice"><span>电话面试</span><span class="active">文字面试</span></div><div class="student-submit student-interview-submit">开始模拟面试</div></div>`
     case 'competitiveness':
-      return `${common}<div class="student-page-title"><small>COMPETITIVENESS</small><strong>竞争力分析</strong><span>了解你的求职竞争力</span></div><div class="student-form-card"><h3>基本信息</h3>${studentField('姓名', '张同学')}${studentField('目标岗位', 'AI产品经理')}${studentField('当前岗位', '学生')}${studentField('工作年限', '应届生')}</div><div class="student-form-card"><h3>能力信息</h3>${studentField('核心技能', '需求分析、数据分析、原型设计', true)}${studentField('学历背景', '本科 · 计算机科学与技术')}${studentField('个人优势', '逻辑清晰，善于协作推进项目', true)}</div><div class="student-submit">开始竞争力分析</div></div>`
+      return `${common}<div class="student-page-title"><small>COMPETITIVENESS</small><strong>竞争力分析</strong><span>看清目标岗位与你的匹配度</span></div><div class="student-form-card student-competitiveness-basic"><h3>基本信息</h3>${studentField('姓名', '张同学')}${studentField('目标岗位', 'AI产品经理')}${studentField('当前岗位', '学生')}${studentField('工作年限', '应届生')}</div><div class="student-form-card student-competitiveness-skills"><h3>能力信息</h3>${studentField('核心技能', '需求分析、数据分析、原型设计', true)}${studentField('学历背景', '本科 · 计算机科学与技术')}${studentField('个人优势', '逻辑清晰，善于协作推进项目', true)}</div><div class="student-submit student-competitiveness-submit">开始竞争力分析</div></div>`
     case 'review':
       return `${common}<div class="student-page-title"><small>INTERVIEW REVIEW</small><strong>面试复盘</strong><span>你离 offer 只差一次复盘</span></div><div class="student-review-hero"><b>AI</b><strong>面试突破器</strong><small>基于真实面试语料，逐题分析表达、逻辑与岗位匹配度</small></div><div class="student-review-card"><strong>上传面试录音</strong><small>上传已有录音，让 AI 帮你复盘每一道题</small><button>选择音频文件</button></div><div class="student-review-card"><strong>实时录音复盘</strong><small>直接开始一次完整模拟面试，获得即时面评</small><button class="primary">开始录音</button></div><div class="student-form-card"><h3>补充简历信息</h3>${studentField('目标岗位', 'AI产品经理')}${studentField('面试公司', '字节跳动')}</div></div>`
     case 'jobs':
@@ -257,12 +282,18 @@ function renderStudentView(root: HTMLElement, step: Step, player: Player): void 
   if (btn && cta) btn.addEventListener('click', () => player.goto(cta.goto))
   if (!auto) {
     resetFocusZoom(phone)
-    if (btn && cta && step.focusZoom === true) requestAnimationFrame(() => applyFocusZoom(phone, cta.x, cta.y))
+    if (btn && cta) {
+      requestAnimationFrame(() => {
+        const aligned = alignCtaToAnchor(screen, cta, btn)
+        applyFocusZoom(phone, aligned.x, aligned.y)
+      })
+    }
     return
   }
   const canvas = root.querySelector<HTMLElement>('.student-scroll-canvas')!
+  applyPresentationFocus(phone)
   startAutoScroll(screen, canvas, step.scrollNotes ?? [], notes, cta ? () => {
-    if (step.focusZoom === true) applyFocusZoom(phone, cta.x, cta.y)
+    if (btn && cta) alignCtaToAnchor(screen, cta, btn)
   } : undefined)
 }
 
@@ -425,6 +456,7 @@ function renderTeacherView(root: HTMLElement, step: Step, player: Player): void 
   if (btn && cta) btn.addEventListener('click', () => player.goto(cta.goto))
   if (auto) {
     const canvas = root.querySelector<HTMLElement>('.teacher-scroll-canvas')!
+    applyPresentationFocus(phone)
     const begin = () => {
       // 绝对定位的教师画布不会自然继承参考截图的高度，显式按原图比例撑开。
       const referenceImage = canvas.querySelector<HTMLImageElement>('.teacher-reference-view img')
@@ -438,8 +470,7 @@ function renderTeacherView(root: HTMLElement, step: Step, player: Player): void 
         noteLayer,
         cta
           ? () => {
-              const aligned = alignCtaToAnchor(screen, cta, btn!)
-              applyFocusZoom(phone, aligned.x, aligned.y)
+              if (btn) alignCtaToAnchor(screen, cta, btn)
             }
           : undefined
       )
@@ -467,6 +498,12 @@ function renderTeacherView(root: HTMLElement, step: Step, player: Player): void 
     }
   } else {
     resetFocusZoom(phone)
+    if (btn && cta) {
+      requestAnimationFrame(() => {
+        const aligned = alignCtaToAnchor(screen, cta, btn)
+        applyFocusZoom(phone, aligned.x, aligned.y)
+      })
+    }
   }
 }
 
@@ -502,6 +539,7 @@ function startAutoScroll(
     activeIndex: -1,
     activeUntil: 0,
   }
+  let noteHideTimer: number | null = null
   const tick = (t: number) => {
     const p = Math.min(1, (t - t0) / duration)
     // 慢快慢三段式缓动（easeInOutCubic）：起步慢 → 中途加速快滑 → 临近底部减速停住
@@ -511,15 +549,24 @@ function startAutoScroll(
     if (p < 1) {
       raf = requestAnimationFrame(tick)
     } else {
-      hideScrollNotes(noteLayer)
       screen.classList.add('scroll-done')
-      cancelAutoScroll = null
       onDone?.()
+      const remaining = Math.max(0, noteRuntime.activeUntil - t)
+      if (noteRuntime.activeIndex >= 0 && remaining > 0) {
+        noteHideTimer = window.setTimeout(() => {
+          hideScrollNotes(noteLayer)
+          cancelAutoScroll = null
+        }, remaining)
+      } else {
+        hideScrollNotes(noteLayer)
+        cancelAutoScroll = null
+      }
     }
   }
   raf = requestAnimationFrame(tick)
   cancelAutoScroll = () => {
     cancelAnimationFrame(raf)
+    if (noteHideTimer !== null) window.clearTimeout(noteHideTimer)
     hideScrollNotes(noteLayer)
   }
 }
@@ -584,6 +631,7 @@ export function renderPhone(
   screen.classList.remove('scroll-done')
   canvas.style.transform = ''
   resetFocusZoom(phone)
+  if (auto) applyPresentationFocus(phone)
 
   if (!img.src.endsWith(step.image)) {
     img.src = step.image
@@ -614,7 +662,9 @@ export function renderPhone(
       img,
       step.scrollNotes ?? [],
       noteLayer,
-      () => applyFocusZoom(phone, cta.x, cta.y)
+      () => {
+        if (cta.anchorSelector && btn) alignCtaToAnchor(screen, cta, btn)
+      }
     )
   } else {
     layer.innerHTML = staticSpots + (cta ? ctaHtml(cta.x, cta.y, cta.label) : '')
@@ -622,10 +672,11 @@ export function renderPhone(
     const ctaBtn = layer.querySelector<HTMLButtonElement>('.hotspot-cta')
     if (ctaBtn && cta) {
       ctaBtn.addEventListener('click', () => player.goto(cta.goto))
-      // 索引点出现即聚焦放大，以该功能点为视觉中心
-      if (step.focusZoom !== false) {
-        requestAnimationFrame(() => applyFocusZoom(phone, cta.x, cta.y))
-      }
+      // 索引点出现即聚焦放大，以真实功能点为视觉中心。
+      requestAnimationFrame(() => {
+        const aligned = alignCtaToAnchor(screen, cta, ctaBtn)
+        applyFocusZoom(phone, aligned.x, aligned.y)
+      })
     }
   }
 
