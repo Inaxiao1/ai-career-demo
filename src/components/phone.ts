@@ -199,6 +199,72 @@ function renderTeacherHandoff(root: HTMLElement, step: Step, player: Player): vo
   if (btn && cta) btn.addEventListener('click', () => player.goto(cta.goto))
 }
 
+function studentNav(active = '首页'): string {
+  const items = [['⌂', '首页'], ['▣', '岗位'], ['▤', '课程'], ['≡', '通知'], ['●', '我的']]
+  return `<div class="student-bottom-nav">${items.map(([icon, label]) => `<span class="${active === label ? 'active' : ''}"><b>${icon}</b><small>${label}</small></span>`).join('')}</div>`
+}
+
+function studentHeader(title = '首页', subtitle = ''): string {
+  return `<div class="student-header"><div class="student-header-brand"><span class="student-logo">两</span><strong>江苏理工学院</strong></div><span class="student-header-title">${title}</span>${subtitle ? `<small>${subtitle}</small>` : ''}</div>`
+}
+
+function studentField(label: string, value: string, multiline = false): string {
+  return `<div class="student-field"><label>${label}</label><div class="student-field-value${multiline ? ' multiline' : ''}">${value}</div></div>`
+}
+
+function studentViewMarkup(view: NonNullable<Step['studentView']>): string {
+  const common = `${studentHeader()}<div class="student-demo-body">`
+  switch (view) {
+    case 'home':
+      return `${common}<div class="student-banner"><small>AI 简历制作</small><strong>AI 定制化生成简历</strong><span>立即体验 →</span></div><div class="student-section-head"><strong>AI功能</strong><span>更多功能 ›</span></div><div class="student-feature-grid"><div class="student-feature"><b>⌁</b><strong>求职规划</strong><small>定制求职路径</small></div><div class="student-feature"><b>▤</b><strong>简历制作</strong><small>专业简历制作</small></div><div class="student-feature"><b>◉</b><strong>模拟面试</strong><small>AI真人模拟面试</small></div></div><div class="student-path-section"><div class="student-section-head"><strong>我的准备路径</strong><span>编辑目标 ›</span></div><div class="student-path-card"><div><strong>通往 AI产品经理</strong><small>目标岗位</small></div><div class="student-path-route"><span class="passed">1</span><i class="filled"></i><span class="passed">2</span><i class="filled"></i><span class="active">3</span><i></i><span>4</span><i></i><span>5</span></div><div class="student-path-foot"><small>已完成 2 / 5 个阶段</small><b>继续准备 ›</b></div></div></div><div class="student-recommend-section"><div class="student-section-head"><strong>为你推荐的课程</strong><span>匹配 AI产品经理</span></div><div class="student-recommend-row"><b>课</b><div><strong>大学生求职通识课</strong><small>3 章 · 通用课</small><span>继续学习 · 已学 1 / 3</span></div><em>›</em></div></div><div class="student-job-section"><div class="student-section-head"><strong>为你推荐的岗位</strong><span>最新岗位 ›</span></div><div class="student-job-row"><b>字</b><div><strong>运营专员</strong><small>字节跳动 · 南京</small><span>校招 · 可内推</span></div><em>›</em></div></div></div>${studentNav()}`
+    case 'home-more':
+      return `${common}<div class="student-banner muted"><small>AI 练习</small><strong>模拟面试</strong><span>练习表达，从容面对每一次提问</span></div><div class="student-more-panel"><div class="student-section-head"><strong>更多功能</strong><b>×</b></div><div class="student-more-grid"><div class="student-feature"><b>▥</b><strong>竞争力分析</strong><small>了解你的求职竞争力</small></div><div class="student-feature"><b>▣</b><strong>面试复盘</strong><small>复盘面试经验提升</small></div></div></div></div>${studentNav()}`
+    case 'planning':
+      return `${common}<div class="student-page-title"><small>CAREER PLANNING</small><strong>求职规划</strong><span>填写信息，AI 定制你的成长路径</span></div><div class="student-progress-strip"><b>1</b><span>填写信息</span><i></i><b>2</b><span>生成规划</span><i></i><b>3</b><span>执行路径</span></div><div class="student-form-card"><h3>基本信息</h3>${studentField('姓名', '张同学')}${studentField('专业', '计算机科学与技术')}<div class="student-import-row"><div><strong>导入简历（可选）</strong><small>自动读取实习、项目和校园经历</small></div><b>选择文件</b></div>${studentField('性格', '外向')}${studentField('哪一届毕业', '2026 届')}${studentField('意向岗位', 'AI产品经理')}${studentField('是否期待创业', '否')}</div><div class="student-form-card"><h3>经历与期望</h3>${studentField('相关大厂实习', '0 段')}${studentField('实习 / 项目经历', '校园 AI 求职助手产品设计', true)}${studentField('校园经历与个人优势', '需求分析、数据分析、原型设计', true)}${studentField('毕业后期望薪资', '8-15K')}${studentField('学校类型', '普通本科')}</div><div class="student-submit">生成求职规划</div></div>`
+    case 'resume':
+      return `${common}<div class="student-page-title"><small>RESUME BUILDER</small><strong>简历制作</strong><span>先选一套版式，再填写你的经历</span></div><div class="student-template-intro"><strong>选择简历模板</strong><small>内容、颜色和段落结构会同步到 PDF</small></div><div class="student-template-grid"><div class="student-template-card selected"><div class="student-template-preview"><b>张同学</b><i></i><i></i><strong>教育经历</strong><i></i><i></i><strong>实践经历</strong><i></i></div><strong>经典蓝白</strong><small>清晰 · 专业 · 适合校招</small></div><div class="student-template-card"><div class="student-template-preview warm"><b>张同学</b><i></i><i></i><strong>项目经历</strong><i></i><i></i><strong>技能证书</strong><i></i></div><strong>简约暖色</strong><small>简洁 · 突出重点</small></div></div><div class="student-form-card"><h3>基本信息</h3>${studentField('姓名', '张同学')}${studentField('联系方式', '138****0001')}${studentField('毕业信息', '江苏理工学院 · 计算机科学与技术')}</div><div class="student-form-card"><h3>求职期望</h3>${studentField('目标岗位', 'AI产品经理')}${studentField('目标城市', '杭州')}${studentField('个人优势', '需求分析、数据分析、原型设计', true)}</div><div class="student-submit">使用此模板并生成简历</div></div>`
+    case 'interview':
+      return `${common}<div class="student-page-title"><small>AI INTERVIEW</small><strong>模拟面试</strong><span>AI 真人模拟面试</span></div><div class="student-form-card"><h3>面试信息</h3>${studentField('公司名称', '字节跳动')}${studentField('目标岗位', '运营专员')}${studentField('岗位要求', '用户运营、活动策划、数据分析', true)}</div><div class="student-form-card"><h3>求职信息</h3>${studentField('过往公司', '暂无')}${studentField('项目经历', '校园活动运营项目')}${studentField('核心技能', '沟通表达、数据分析')}</div><div class="student-upload"><b>↑</b><strong>上传简历</strong><small>支持 PDF / Word 文件</small></div><div class="student-choice"><span>电话面试</span><span class="active">文字面试</span></div><div class="student-submit">开始模拟面试</div></div>`
+    case 'competitiveness':
+      return `${common}<div class="student-page-title"><small>COMPETITIVENESS</small><strong>竞争力分析</strong><span>了解你的求职竞争力</span></div><div class="student-form-card"><h3>基本信息</h3>${studentField('姓名', '张同学')}${studentField('目标岗位', 'AI产品经理')}${studentField('当前岗位', '学生')}${studentField('工作年限', '应届生')}</div><div class="student-form-card"><h3>能力信息</h3>${studentField('核心技能', '需求分析、数据分析、原型设计', true)}${studentField('学历背景', '本科 · 计算机科学与技术')}${studentField('个人优势', '逻辑清晰，善于协作推进项目', true)}</div><div class="student-submit">开始竞争力分析</div></div>`
+    case 'review':
+      return `${common}<div class="student-page-title"><small>INTERVIEW REVIEW</small><strong>面试复盘</strong><span>你离 offer 只差一次复盘</span></div><div class="student-review-hero"><b>AI</b><strong>面试突破器</strong><small>基于真实面试语料，逐题分析表达、逻辑与岗位匹配度</small></div><div class="student-review-card"><strong>上传面试录音</strong><small>上传已有录音，让 AI 帮你复盘每一道题</small><button>选择音频文件</button></div><div class="student-review-card"><strong>实时录音复盘</strong><small>直接开始一次完整模拟面试，获得即时面评</small><button class="primary">开始录音</button></div><div class="student-form-card"><h3>补充简历信息</h3>${studentField('目标岗位', 'AI产品经理')}${studentField('面试公司', '字节跳动')}</div></div>`
+    case 'jobs':
+      return `${common}<div class="student-page-title"><small>JOB BOARD</small><strong>岗位信息</strong><span>公开岗位介绍 · 持续更新</span></div><div class="student-search">⌕ 搜索岗位、公司或城市</div><div class="student-tabs"><span class="active">全部</span><span>校招</span><span>实习</span><span>已关注</span></div><div class="student-job-card"><b>字</b><div><strong>运营专员</strong><small>字节跳动 · 南京 · 校招</small><span>本科 · 可内推 · 五险一金</span></div><em>›</em></div><div class="student-job-card"><b class="blue">云</b><div><strong>前端开发工程师</strong><small>阿里云 · 杭州 · 校招</small><span>计算机相关 · 15-25K</span></div><em>›</em></div><div class="student-job-card"><b class="orange">宁</b><div><strong>数据分析实习生</strong><small>南京银行 · 南京 · 实习</small><span>每周 4 天 · 可转正</span></div><em>›</em></div></div>${studentNav('岗位')}`
+    case 'course-list':
+      return `${common}<div class="student-page-title"><small>COURSE LIBRARY</small><strong>课程学习</strong><span>围绕 AI产品经理安排你的学习计划</span></div><div class="student-search">⌕ 搜索课程名称或方向</div><div class="student-course-section"><div class="student-section-head"><strong>推荐课程</strong><span>3 门</span></div><div class="student-course-row"><b>课</b><div><strong>大学生求职通识课</strong><small>3 章 · 通用课</small><span>已学 1 / 3 章节</span></div><em>›</em></div><div class="student-course-row"><b class="blue">简</b><div><strong>AI 简历优化训练营</strong><small>3 章 · AI学习</small><span>推荐学习</span></div><em>›</em></div></div><div class="student-course-section"><div class="student-section-head"><strong>全部课程</strong><span>6 门</span></div><div class="student-category"><span class="active">全部</span><span>通用课</span><span>AI学习</span><span>产品</span><span>运营</span></div><div class="student-course-row"><b class="violet">面</b><div><strong>模拟面试表达训练</strong><small>4 章 · 面试准备</small><span>开始学习</span></div><em>›</em></div></div></div>${studentNav('课程')}`
+    case 'course-detail':
+      return `${common}<div class="student-detail-top"><span>‹</span><strong>课程学习</strong></div><div class="student-course-hero"><b>求</b><div><strong>大学生求职通识课</strong><small>从就业认知到拿到 Offer，建立完整求职方法论。</small></div></div><div class="student-teacher-preview"><small>TEACHER PREVIEW</small><strong>课程内容预览</strong><span>共 3 个章节，下方可直接查看本课班级学习反馈。</span></div><div class="student-learning-card"><div><strong>学习进度</strong><b>1 / 3 章节</b></div><i><em style="width:33%"></em></i><small>正在学习 · 第 2 章</small></div><div class="student-chapter-list"><h3>课程章节 <span>共 3 章</span></h3><div><b>1</b><strong>认识就业市场与岗位方向</strong><small>已完成</small></div><div><b>2</b><strong>拆解招聘信息与岗位要求</strong><small>正在学习</small></div><div><b>3</b><strong>制定你的求职时间表</strong><small>待学习</small></div></div></div>`
+    case 'messages':
+      return `${common}<div class="student-page-title"><small>MESSAGE CENTER</small><strong>消息与动态</strong><span>老师、学校和系统提醒</span></div><div class="student-tabs"><span class="active">全部</span><span>老师通知</span><span>系统消息</span></div><div class="student-message unread"><b>师</b><div><strong>秋招材料提交提醒</strong><small>王老师 · 今天 09:20 · 重要</small><p>请在周五前更新求职状态，并完成老师推送的简历课程。</p></div><em>未读</em></div><div class="student-message"><b class="system">校</b><div><strong>本周课程学习安排</strong><small>学校通知 · 昨天 16:40</small><p>本周请完成 AI 简历优化训练营前两个章节。</p></div></div><div class="student-message"><b class="system">系</b><div><strong>岗位推荐已更新</strong><small>系统消息 · 2 天前</small><p>本周新增 12 个校招与实习岗位，欢迎查看。</p></div></div></div>${studentNav('通知')}`
+  }
+}
+
+function renderStudentView(root: HTMLElement, step: Step, player: Player): void {
+  stopAutoScroll()
+  const cta = step.clickTarget
+  const auto = !!step.autoScroll
+  const spots = (step.hotspots ?? []).map((h, i) => `<div class="hotspot${edgeClass(h.x)}" style="left:${h.x}%;top:${h.y}%"><span class="hotspot-pin"><i class="hotspot-num">${i + 1}</i></span><span class="hotspot-label">${h.label}</span></div>`).join('')
+  root.innerHTML = auto
+    ? `<div class="phone student-phone ${auto ? 'student-auto-phone' : ''}"><div class="phone-notch"></div><div class="phone-screen student-screen"><div class="student-scroll-canvas">${studentViewMarkup(step.studentView!)}</div><div class="hotspot-layer">${spots}</div><div class="pin-layer">${cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div></div></div>${step.scrollNotes?.length ? scrollNotesHtml(step.scrollNotes) : ''}`
+    : `<div class="phone student-phone"><div class="phone-notch"></div><div class="phone-screen student-screen">${studentViewMarkup(step.studentView!)}<div class="hotspot-layer">${spots}${cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div></div></div>`
+  const phone = root.querySelector<HTMLElement>('.phone')!
+  const screen = root.querySelector<HTMLElement>('.phone-screen')!
+  const btn = root.querySelector<HTMLButtonElement>('.hotspot-cta')
+  const notes = root.querySelector<HTMLElement>('.scroll-note-layer')
+  if (btn && cta) btn.addEventListener('click', () => player.goto(cta.goto))
+  if (!auto) {
+    resetFocusZoom(phone)
+    if (btn && cta && step.focusZoom !== false) requestAnimationFrame(() => applyFocusZoom(phone, cta.x, cta.y))
+    return
+  }
+  const canvas = root.querySelector<HTMLElement>('.student-scroll-canvas')!
+  startAutoScroll(screen, canvas, step.scrollNotes ?? [], notes, cta ? () => {
+    const aligned = alignCtaToAnchor(screen, cta, btn!)
+    applyFocusZoom(phone, aligned.x, aligned.y)
+  } : undefined)
+}
+
 function teacherTopbar(): string {
   return `
     <div class="teacher-topbar">
@@ -259,7 +325,7 @@ function teacherReferenceView(image: string, alt: string): string {
 }
 
 function currentTeacherHomeView(): string {
-  return `<div class="teacher-reference-view teacher-current-reference"><img src="assets/shots/teacher-home-current.png" alt="教师端最新工作台首页" draggable="false" /><span class="teacher-current-board-anchor" aria-hidden="true"></span></div>`
+  return `<div class="teacher-demo teacher-dashboard-page teacher-current-page">${teacherTopbar()}<div class="teacher-school"><span class="school-mark">江</span><strong>江苏理工学院</strong><em>教师端</em></div><div class="teacher-current-welcome"><small>教师工作台</small><strong>你好，王老师</strong><span>江苏理工学院 · 计算机2301班</span><button>刷新</button></div><div class="teacher-current-stats"><div><strong>6人</strong><small>班级学生</small><span>查看学生名单 ›</span></div><div class="warning"><strong>1人</strong><small>需要关注</small><span>待跟进对象 ›</span></div><div><strong>2人</strong><small>Offer / 入职</small><span>已有就业结果 ›</span></div><div class="teal"><strong>70%</strong><small>平均学习</small><span>课程学习进度 ›</span></div></div><div class="teacher-current-board-entry teacher-current-board-anchor"><div><small>CLASS DASHBOARD</small><strong>打开班级看板</strong><span>汇总班级就业状态、学习进度与待跟进学生</span></div><b>›</b></div><div class="teacher-current-panel"><div class="teacher-current-filter-row"><span class="active">计算机2301班</span><span>全部班级</span><span>重点关注</span></div><div class="teacher-current-scope"><strong>所有学生 <b>6</b></strong><span>重点关注 <b>1</b></span></div><div class="teacher-current-list-head"><strong>学生列表</strong><small>6 人</small></div>${teacherStudent('赵同学', '信息管理', '运营专员', 17, '准备中', 'orange')}${teacherStudent('张同学', '计算机科学', '前端开发', 67, '已关注', 'blue')}${teacherStudent('李同学', '软件工程', '产品经理', 100, '面试中', 'violet')}${teacherStudent('周同学', '数据科学', '数据分析', 50, '准备中', 'cyan')}</div><div class="teacher-current-tip">点击学生卡片查看详情，支持关注学生并推送课程</div></div>`
 }
 
 function teacherViewMarkup(view: NonNullable<Step['teacherView']>): string {
@@ -483,6 +549,10 @@ export function renderPhone(
 
   if (step.handoffView) {
     renderTeacherHandoff(root, step, player)
+    return
+  }
+  if (step.studentView) {
+    renderStudentView(root, step, player)
     return
   }
   if (step.teacherView) {

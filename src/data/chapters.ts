@@ -40,6 +40,19 @@ export interface Step {
   detail: string
   /** 手机壳内展示的页面截图 */
   image: string
+  /** 当前小程序结构化页面；设置后优先于 image 渲染，确保演示内容与页面结构同步。 */
+  studentView?:
+    | 'home'
+    | 'home-more'
+    | 'planning'
+    | 'resume'
+    | 'interview'
+    | 'competitiveness'
+    | 'review'
+    | 'jobs'
+    | 'course-list'
+    | 'course-detail'
+    | 'messages'
   /** 功能点标注（可选） */
   hotspots?: Hotspot[]
   /**
@@ -262,38 +275,44 @@ export const chapters: Chapter[] = [
         detail:
           '首页先展示 AI 功能区，第一张卡片是「求职规划」：点击它进入定制求职路径，完成后还能从首页继续查看准备路径和岗位、课程推荐。',
         image: 'assets/shots/home.png',
-        clickTarget: { x: 20, y: 47, goto: { chapter: 1, step: 0 } },
+        studentView: 'home',
+        clickTarget: { x: 20, y: 47, anchorSelector: '.student-feature:nth-child(1)', goto: { chapter: 1, step: 0 } },
       },
       {
         caption: '② 简历制作 · 点击卡片进入',
         detail: '第二张「简历制作」卡片上索引点亮起——点击它，看看 AI 怎么写简历。',
         image: 'assets/shots/home.png',
-        clickTarget: { x: 50, y: 47, goto: { chapter: 2, step: 0 } },
+        studentView: 'home',
+        clickTarget: { x: 50, y: 47, anchorSelector: '.student-feature:nth-child(2)', goto: { chapter: 2, step: 0 } },
       },
       {
         caption: '③ 模拟面试 · 点击卡片进入',
         detail: '第三张「模拟面试」卡片——点击它，见见你的 AI 面试官。',
         image: 'assets/shots/home.png',
-        clickTarget: { x: 79, y: 47, goto: { chapter: 3, step: 0 } },
+        studentView: 'home',
+        clickTarget: { x: 79, y: 47, anchorSelector: '.student-feature:nth-child(3)', goto: { chapter: 3, step: 0 } },
       },
       {
         caption: '④ 更多功能 · 点击进入',
         detail:
           'AI 功能区右上角还有「更多功能」入口：竞争力分析与面试复盘藏在里面。点击索引点，展开更多功能面板。',
         image: 'assets/shots/home.png',
-        clickTarget: { x: 85, y: 38, goto: { chapter: 0, step: 5 } },
+        studentView: 'home',
+        clickTarget: { x: 85, y: 38, anchorSelector: '.student-section-head span', goto: { chapter: 0, step: 5 } },
       },
       {
         caption: '⑤ 竞争力分析 · 点击卡片进入',
         detail: '「更多功能」面板展开了——先点击「竞争力分析」卡片，看看你的求职竞争力。',
         image: 'assets/shots/home-more.png',
-        clickTarget: { x: 29, y: 52, goto: { chapter: 4, step: 0 } },
+        studentView: 'home-more',
+        clickTarget: { x: 29, y: 52, anchorSelector: '.student-more-grid .student-feature:nth-child(1)', goto: { chapter: 4, step: 0 } },
       },
       {
         caption: '⑥ 面试复盘 · 点击卡片进入',
         detail: '回到「更多功能」面板，最后一站：点击「面试复盘」卡片，把真实面试录音交给 AI 复盘。',
         image: 'assets/shots/home-more.png',
-        clickTarget: { x: 71, y: 52, goto: { chapter: 5, step: 0 } },
+        studentView: 'home-more',
+        clickTarget: { x: 71, y: 52, anchorSelector: '.student-more-grid .student-feature:nth-child(2)', goto: { chapter: 5, step: 0 } },
       },
     ],
   },
@@ -309,6 +328,7 @@ export const chapters: Chapter[] = [
         detail:
           '进入求职规划了。这页演示会自动向下滑动，带你完整浏览基本信息、经历与期望等表单内容，完善后可生成个人求职规划。滑到底部后，「返回总览」索引点随即亮起。',
         image: 'assets/shots/career-planning-full.png',
+        studentView: 'planning',
         autoScroll: true,
         scrollNotes: STUDENT_SCROLL_NOTES.planning,
         clickTarget: { x: 50, y: 88, label: '返回总览', goto: { chapter: 0, step: 2 } },
@@ -327,6 +347,7 @@ export const chapters: Chapter[] = [
         detail:
           '进入简历制作了。这页演示同样会自动向下滑动：基本信息、求职期望、教育/实习/社团经历分区编辑，填完一键生成附件简历。滑到底部停住后，「返回总览」索引点亮起——点它继续下一站。',
         image: 'assets/shots/resume-full.png',
+        studentView: 'resume',
         autoScroll: true,
         scrollNotes: STUDENT_SCROLL_NOTES.resume,
         clickTarget: { x: 50, y: 88, label: '返回总览', goto: { chapter: 0, step: 3 } },
@@ -345,6 +366,7 @@ export const chapters: Chapter[] = [
         detail:
           '进入模拟面试了。这页演示同样会自动向下滑动，完整展示面试设置：公司岗位、岗位要求、求职信息与简历上传。滑到底部停住后，「返回总览」索引点亮起——点它继续探索更多 AI 功能。',
         image: 'assets/shots/ai-interview-full.png',
+        studentView: 'interview',
         autoScroll: true,
         scrollNotes: STUDENT_SCROLL_NOTES.interview,
         clickTarget: { x: 50, y: 88, label: '返回总览', goto: { chapter: 0, step: 4 } },
@@ -363,6 +385,7 @@ export const chapters: Chapter[] = [
         detail:
           '进入竞争力分析了。这页演示会自动向下滑动，完整展示表单：基本信息（姓名、目标岗位、当前岗位、工作年限）与能力信息（核心技能、学历背景、个人优势），填完点底部「开始竞争力分析」，AI 会给出竞争力评估与提升建议。滑到底部停住后，「返回更多功能」索引点亮起——点它继续下一站。',
         image: 'assets/shots/competitiveness-full.png',
+        studentView: 'competitiveness',
         autoScroll: true,
         scrollNotes: STUDENT_SCROLL_NOTES.competitiveness,
         clickTarget: { x: 50, y: 88, label: '返回更多功能', goto: { chapter: 0, step: 6 } },
@@ -381,6 +404,7 @@ export const chapters: Chapter[] = [
         detail:
           '面试突破器支持上传面试录音、实时录音和简历补充，AI 会基于真实语料训练的面评模型逐题复盘。页面内容较短，直接完整呈现后，索引球引导你回到学生首页。',
         image: 'assets/shots/interview-review-current.png',
+        studentView: 'review',
         focusZoom: false,
         clickTarget: { x: 50, y: 88, label: '回到学生首页', goto: { chapter: 5, step: 1 } },
       },
@@ -389,6 +413,7 @@ export const chapters: Chapter[] = [
         detail:
           '面试复盘已经展示完成。回到学生首页后，沿着底部导航继续探索岗位信息与内推机会——索引球会指向「岗位」，点击它开始浏览机会列表。',
         image: 'assets/shots/home.png',
+        studentView: 'home',
         clickTarget: { x: 30, y: 92, label: '点击岗位', goto: { chapter: 6, step: 0 } },
       },
     ],
@@ -405,6 +430,7 @@ export const chapters: Chapter[] = [
         detail:
           '从学生首页底部点击「岗位」进入机会列表。校招 / 实习推荐、公司信息、地点与福利标签已经在当前页面完整呈现，看完后索引球引导你进入课程。',
         image: 'assets/shots/jobs.png',
+        studentView: 'jobs',
         focusZoom: false,
         clickTarget: { x: 30, y: 92, label: '点击课程', goto: { chapter: 7, step: 0 } },
       },
@@ -422,6 +448,7 @@ export const chapters: Chapter[] = [
         detail:
           '从岗位页底部点击「课程」进入课程学习。简历、面试、行业认知等分类课程集中在这里，索引球会指向「求职精品课」——点击它查看课程详情。',
         image: 'assets/shots/course-list.png',
+        studentView: 'course-list',
         clickTarget: { x: 38, y: 30, label: '点击求职精品课', goto: { chapter: 7, step: 1 } },
       },
       {
@@ -429,6 +456,7 @@ export const chapters: Chapter[] = [
         detail:
           '进入课程详情后自动滚动展示课程简介、学习进度、章节目录与当前章节内容。完整看完课程界面后，索引球引导你回到课程列表，再点击底部「消息」。',
         image: 'assets/shots/course-detail-full.png',
+        studentView: 'course-detail',
         autoScroll: true,
         scrollNotes: STUDENT_SCROLL_NOTES.course,
         clickTarget: { x: 50, y: 88, label: '回到课程列表', goto: { chapter: 7, step: 2 } },
@@ -438,6 +466,7 @@ export const chapters: Chapter[] = [
         detail:
           '课程详情已经展示完成。回到课程列表后，沿着底部导航点击「通知」，继续查看老师发布的求职提醒和系统动态。',
         image: 'assets/shots/course-list.png',
+        studentView: 'course-list',
         hotspots: [
           { x: 38, y: 30, label: '求职精品课 · 查看课表' },
           { x: 38, y: 52, label: '在线课堂 · 立即学习' },
@@ -458,6 +487,7 @@ export const chapters: Chapter[] = [
         detail:
           '从课程页底部点击「消息」进入消息中心。未读提醒、教师通知和系统消息已经在当前页面完整呈现，看完后承接到教师端功能总览。',
         image: 'assets/shots/messages.png',
+        studentView: 'messages',
         focusZoom: false,
         clickTarget: { x: 70, y: 92, label: '继续看教师端', goto: { chapter: 8, step: 1 } },
       },
@@ -466,6 +496,7 @@ export const chapters: Chapter[] = [
         detail:
           '学生端的规划、求职、学习和消息体验到这里完成。教师端接着使用同一批班级数据，从班级看板开始跟进重点学生、查看就业和学习进度，再发出提醒。点击「进入教师端」，按步骤继续浏览。',
         image: 'assets/shots/messages.png',
+        studentView: 'messages',
         handoffView: 'teacher',
         clickTarget: { x: 50, y: 74, label: '进入教师端', goto: { chapter: 14, step: 0 } },
       },
