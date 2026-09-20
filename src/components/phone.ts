@@ -40,11 +40,20 @@ function ctaHtml(x: number, y: number, label?: string): string {
 // 手机被放大平移后溢出部分由 .glass-card overflow:hidden 裁掉。
 const FOCUS_ZOOM = 1.5
 const PRESENTATION_ZOOM = 1.55
+const DEFAULT_SHOT_WIDTH = 516
+const DEFAULT_SHOT_HEIGHT = 1120
 
 function applyFocusZoom(phone: HTMLElement, x: number, y: number): void {
+  const stage = phone.closest<HTMLElement>('.stage')
+  const stageWidth = stage?.clientWidth ?? phone.offsetWidth * 3
+  const phoneWidth = Math.max(1, phone.offsetWidth)
+  // 批注固定在舞台右侧，目标内容放到左侧阅读区的中心，而不是把放大后的
+  // 手机留在舞台正中。这样按钮、真实页面内容和右侧说明不会互相遮挡。
+  const leftOffset = Math.min(160, stageWidth * 0.18)
+  const targetShift = (leftOffset / (FOCUS_ZOOM * phoneWidth)) * 100
   phone.classList.remove('presentation-focus')
   phone.style.setProperty('--zoom', String(FOCUS_ZOOM))
-  phone.style.setProperty('--tx', `${(50 - x).toFixed(1)}%`)
+  phone.style.setProperty('--tx', `${(50 - x - targetShift).toFixed(1)}%`)
   phone.style.setProperty('--ty', `${(50 - y).toFixed(1)}%`)
 }
 
@@ -65,6 +74,26 @@ function resetFocusZoom(phone: HTMLElement): void {
   phone.style.setProperty('--tx', '0%')
   phone.style.setProperty('--ty', '0%')
   phone.classList.remove('presentation-focus')
+}
+
+/**
+ * Keep the presentation viewport locked to the source capture ratio.
+ * The current exports are phone screenshots, so stretching them to a generic
+ * phone frame would change both spacing and typography. Future captures can
+ * use another size without needing a CSS change.
+ */
+function syncShotRatio(
+  phone: HTMLElement,
+  screen: HTMLElement,
+  canvas: HTMLElement,
+  img: HTMLImageElement
+): void {
+  const width = img.naturalWidth || DEFAULT_SHOT_WIDTH
+  const height = img.naturalHeight || DEFAULT_SHOT_HEIGHT
+  phone.style.setProperty('--shot-ratio', `${width} / ${height}`)
+  if (img.naturalWidth && img.naturalHeight && screen.clientWidth) {
+    canvas.style.height = `${screen.clientWidth * height / width}px`
+  }
 }
 
 /**
@@ -95,6 +124,68 @@ function alignCtaToAnchor(
   button.style.left = `${x.toFixed(1)}%`
   button.style.top = `${y.toFixed(1)}%`
   return { x, y }
+}
+
+/**
+ * 滚动结束时，如果下一步目标已经被带出视口，先把页面平滑带回目标内容，
+ * 再显示索引球。这样“先看完整页，再点击第一项”的引导仍然落在真实内容上。
+ */
+function revealCtaAfterScroll(
+  screen: HTMLElement,
+  canvas: HTMLElement,
+  cta: NonNullable<Step['clickTarget']>,
+  button: HTMLElement
+): void {
+  if (!cta.anchorSelector) {
+    alignCtaToAnchor(screen, cta, button)
+    return
+  }
+
+  const anchor = canvas.querySelector<HTMLElement>(cta.anchorSelector)
+  if (!anchor) {
+    alignCtaToAnchor(screen, cta, button)
+    return
+  }
+
+  const screenRect = screen.getBoundingClientRect()
+  const anchorRect = anchor.getBoundingClientRect()
+  const margin = screenRect.height * 0.08
+  const alreadyVisible = anchorRect.top >= screenRect.top + margin && anchorRect.bottom <= screenRect.bottom - margin
+  if (alreadyVisible) {
+    alignCtaToAnchor(screen, cta, button)
+    return
+  }
+
+  const currentScroll = Math.max(0, Number(canvas.style.transform.match(/translateY\((-?[\d.]+)px\)/)?.[1] ?? 0) * -1)
+  const distance = Math.max(0, canvas.scrollHeight - screen.clientHeight)
+  const scale = canvas.scrollHeight > 0 ? canvas.getBoundingClientRect().height / canvas.scrollHeight : 1
+  const anchorCenterInViewport = (anchorRect.top + anchorRect.height / 2 - screenRect.top) / Math.max(scale, 0.01)
+  const targetScroll = Math.max(
+    0,
+    Math.min(distance, currentScroll + anchorCenterInViewport - screen.clientHeight * 0.48)
+  )
+
+  if (Math.abs(targetScroll - currentScroll) < 1) {
+    alignCtaToAnchor(screen, cta, button)
+    return
+  }
+
+  screen.classList.remove('scroll-done')
+  const start = performance.now()
+  const duration = 720
+  const animateBack = (now: number) => {
+    const progress = Math.min(1, (now - start) / duration)
+    const eased = 1 - Math.pow(1 - progress, 3)
+    const scroll = currentScroll + (targetScroll - currentScroll) * eased
+    canvas.style.transform = `translateY(-${scroll.toFixed(1)}px)`
+    if (progress < 1) {
+      requestAnimationFrame(animateBack)
+      return
+    }
+    screen.classList.add('scroll-done')
+    alignCtaToAnchor(screen, cta, button)
+  }
+  requestAnimationFrame(animateBack)
 }
 
 function scrollNotesHtml(notes: NonNullable<Step['scrollNotes']>): string {
@@ -265,36 +356,84 @@ function studentViewMarkup(view: NonNullable<Step['studentView']>): string {
   }
 }
 
+// Legacy entry points kept for older integrations. The main renderer below
+// always uses the source capture so these cannot introduce a visual replica.
 function renderStudentView(root: HTMLElement, step: Step, player: Player): void {
+  renderImagePhone(root, step, player, 'student')
+}
+
+/**
+ * 展示层直接使用从小程序导出的原页面截图。
+ * 这些截图包含小程序自己的状态栏、字体、图片、底部导航和间距，
+ * 因此不再用网站侧的仿制 HTML 覆盖原页面视觉。
+ */
+function renderImagePhone(root: HTMLElement, step: Step, player: Player, role: 'student' | 'teacher'): void {
   stopAutoScroll()
   const cta = step.clickTarget
   const auto = !!step.autoScroll
-  const spots = (step.hotspots ?? []).map((h, i) => `<div class="hotspot${edgeClass(h.x)}" style="left:${h.x}%;top:${h.y}%"><span class="hotspot-pin"><i class="hotspot-num">${i + 1}</i></span><span class="hotspot-label">${h.label}</span></div>`).join('')
-  // 学生端使用当前版本的结构化界面，避免复用仓库中已经过时的截图资源。
-  // 手机壳只负责固定视口和滚动，页面内部按同一套设计尺寸绘制。
-  root.innerHTML = auto
-    ? `<div class="phone student-phone student-auto-phone"><div class="phone-notch"></div><div class="phone-screen student-screen"><div class="student-scroll-canvas">${studentViewMarkup(step.studentView!)}</div><div class="hotspot-layer">${spots}</div><div class="pin-layer">${cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div></div></div>${step.scrollNotes?.length ? scrollNotesHtml(step.scrollNotes) : ''}`
-    : `<div class="phone student-phone"><div class="phone-notch"></div><div class="phone-screen student-screen">${studentViewMarkup(step.studentView!)}<div class="hotspot-layer">${spots}${cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div></div></div>`
+  const spots = (step.hotspots ?? [])
+    .map(
+      (h, i) =>
+        `<div class="hotspot${edgeClass(h.x)}" style="left:${h.x}%;top:${h.y}%"><span class="hotspot-pin"><i class="hotspot-num">${i + 1}</i></span><span class="hotspot-label">${h.label}</span></div>`
+    )
+    .join('')
+  const viewClass = role === 'teacher' ? 'teacher-screen' : 'student-screen'
+  root.innerHTML = `
+    <div class="phone image-phone ${role}-phone${auto ? ' auto-scroll' : ''}" style="--shot-ratio: ${DEFAULT_SHOT_WIDTH} / ${DEFAULT_SHOT_HEIGHT}">
+      <div class="phone-notch"></div>
+      <div class="phone-screen ${viewClass} image-screen">
+        <div class="image-scroll-canvas">
+          <img class="phone-shot" src="${step.image}" alt="小程序原页面截图" data-source-capture="${step.image}" draggable="false" />
+          <div class="hotspot-layer">${spots}</div>
+        </div>
+        <div class="pin-layer">${cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div>
+      </div>
+    </div>${step.scrollNotes?.length ? scrollNotesHtml(step.scrollNotes) : ''}`
+
   const phone = root.querySelector<HTMLElement>('.phone')!
   const screen = root.querySelector<HTMLElement>('.phone-screen')!
+  const canvas = root.querySelector<HTMLElement>('.image-scroll-canvas')!
+  const img = root.querySelector<HTMLImageElement>('.phone-shot')!
   const btn = root.querySelector<HTMLButtonElement>('.hotspot-cta')
   const notes = root.querySelector<HTMLElement>('.scroll-note-layer')
   if (btn && cta) btn.addEventListener('click', () => player.goto(cta.goto))
+
+  const syncLayout = () => syncShotRatio(phone, screen, canvas, img)
+  img.addEventListener('load', syncLayout, { once: true })
+  syncLayout()
+
   if (!auto) {
     resetFocusZoom(phone)
-    if (btn && cta) {
-      requestAnimationFrame(() => {
-        const aligned = alignCtaToAnchor(screen, cta, btn)
-        applyFocusZoom(phone, aligned.x, aligned.y)
-      })
+    if (btn && cta && step.focusZoom !== false) {
+      requestAnimationFrame(() => applyFocusZoom(phone, cta.x, cta.y))
     }
     return
   }
-  const canvas = root.querySelector<HTMLElement>('.student-scroll-canvas')!
-  applyPresentationFocus(phone)
-  startAutoScroll(screen, canvas, step.scrollNotes ?? [], notes, cta ? () => {
-    if (btn && cta) alignCtaToAnchor(screen, cta, btn)
-  } : undefined)
+
+  // 真实小程序截图先保持完整比例浏览；只有引导索引球出现时才聚焦放大，
+  // 避免首页或短页面在展示阶段被提前裁切。
+  resetFocusZoom(phone)
+  const begin = () => {
+    syncLayout()
+    startAutoScroll(
+      screen,
+      canvas,
+      step.scrollNotes ?? [],
+      notes,
+      cta
+        ? () => {
+            revealCtaAfterScroll(screen, canvas, cta, btn!)
+            applyFocusZoom(phone, cta.x, cta.y)
+          }
+        : undefined
+    )
+  }
+  if (img.complete && img.naturalHeight > 0) {
+    begin()
+  } else {
+    img.addEventListener('load', begin, { once: true })
+    cancelAutoScroll = () => img.removeEventListener('load', begin)
+  }
 }
 
 function teacherTopbar(): string {
@@ -423,88 +562,7 @@ function teacherViewMarkup(view: NonNullable<Step['teacherView']>): string {
 }
 
 function renderTeacherView(root: HTMLElement, step: Step, player: Player): void {
-  stopAutoScroll()
-  const cta = step.clickTarget
-  const staticSpots = (step.hotspots ?? [])
-    .map(
-      (h, i) => `<div class="hotspot${edgeClass(h.x)}" style="left:${h.x}%;top:${h.y}%"><span class="hotspot-pin"><i class="hotspot-num">${i + 1}</i></span><span class="hotspot-label">${h.label}</span></div>`
-    )
-    .join('')
-  const auto = !!step.autoScroll
-  root.innerHTML = auto
-    ? `
-      <div class="phone teacher-phone teacher-auto-phone">
-        <div class="phone-notch"></div>
-        <div class="phone-screen teacher-screen">
-          <div class="teacher-scroll-canvas">${teacherViewMarkup(step.teacherView!)}</div>
-          <div class="hotspot-layer">${staticSpots}</div>
-          <div class="pin-layer">${cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div>
-        </div>
-      </div>${step.scrollNotes?.length ? scrollNotesHtml(step.scrollNotes) : ''}`
-    : `
-      <div class="phone teacher-phone">
-        <div class="phone-notch"></div>
-        <div class="phone-screen teacher-screen">
-          ${teacherViewMarkup(step.teacherView!)}
-          <div class="hotspot-layer">${staticSpots}${cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div>
-        </div>
-      </div>`
-  const phone = root.querySelector<HTMLElement>('.phone')!
-  const screen = root.querySelector<HTMLElement>('.phone-screen')!
-  const btn = root.querySelector<HTMLButtonElement>('.hotspot-cta')
-  const noteLayer = root.querySelector<HTMLElement>('.scroll-note-layer')
-  if (btn && cta) btn.addEventListener('click', () => player.goto(cta.goto))
-  if (auto) {
-    const canvas = root.querySelector<HTMLElement>('.teacher-scroll-canvas')!
-    applyPresentationFocus(phone)
-    const begin = () => {
-      // 绝对定位的教师画布不会自然继承参考截图的高度，显式按原图比例撑开。
-      const referenceImage = canvas.querySelector<HTMLImageElement>('.teacher-reference-view img')
-      if (referenceImage?.naturalWidth && referenceImage.naturalHeight) {
-        canvas.style.height = `${screen.clientWidth * referenceImage.naturalHeight / referenceImage.naturalWidth}px`
-      }
-      startAutoScroll(
-        screen,
-        canvas,
-        step.scrollNotes ?? [],
-        noteLayer,
-        cta
-          ? () => {
-              if (btn) alignCtaToAnchor(screen, cta, btn)
-            }
-          : undefined
-      )
-    }
-    // 参考截图的高度在图片加载前为 0；等图片就绪后再计算滚动距离。
-    const pendingImages = Array.from(canvas.querySelectorAll<HTMLImageElement>('img')).filter(
-      (image) => !image.complete
-    )
-    if (!pendingImages.length) {
-      begin()
-    } else {
-      let remaining = pendingImages.length
-      const ready = () => {
-        remaining -= 1
-        if (remaining <= 0) begin()
-      }
-      pendingImages.forEach((image) => {
-        image.addEventListener('load', ready, { once: true })
-        image.addEventListener('error', ready, { once: true })
-      })
-      cancelAutoScroll = () => pendingImages.forEach((image) => {
-        image.removeEventListener('load', ready)
-        image.removeEventListener('error', ready)
-      })
-    }
-  } else {
-    resetFocusZoom(phone)
-    if (btn && cta) {
-      requestAnimationFrame(() => {
-        const aligned = alignCtaToAnchor(screen, cta, btn)
-        applyFocusZoom(phone, aligned.x, aligned.y)
-      })
-    }
-  }
+  renderImagePhone(root, step, player, 'teacher')
 }
 
 // ---- 长图自动滚动展示 ----
@@ -523,15 +581,18 @@ function startAutoScroll(
   noteLayer: HTMLElement | null = null,
   onDone?: () => void
 ): void {
-  const dist = canvas.scrollHeight - screen.clientHeight
-  if (dist <= 2) {
+  const dist = Math.max(0, canvas.scrollHeight - screen.clientHeight)
+  const hasPresentation = notes.length > 0 || !!onDone
+  if (dist <= 2 && !hasPresentation) {
     hideScrollNotes(noteLayer)
     screen.classList.add('scroll-done')
-    onDone?.()
     return
   }
-  // 放慢到约每屏 11 秒，让每个内容节点都有完整的阅读时间。
-  const duration = Math.min(24000, Math.max(9000, (dist / screen.clientHeight) * 11000))
+  // 长图按每屏约 11 秒缓慢浏览；没有可滚动距离时仍保留阅读停留，
+  // 让观众先看完整的当前页，再出现索引球和聚焦动画。
+  const duration = dist > 2
+    ? Math.min(24000, Math.max(9000, (dist / screen.clientHeight) * 11000))
+    : Math.max(10000, notes.length * 3000)
   const t0 = performance.now()
   let raf = 0
   const noteRuntime: ScrollNoteRuntime = {
@@ -599,16 +660,15 @@ export function renderPhone(
     renderTeacherHandoff(root, step, player)
     return
   }
-  if (step.studentView) {
-    renderStudentView(root, step, player)
-    return
-  }
-  if (step.teacherView) {
-    renderTeacherView(root, step, player)
-    return
-  }
   if (step.stageImage) {
     renderStageImage(root, step, player)
+    return
+  }
+  // The source capture is the visual contract for every real mini-program page.
+  // Keep the old structured views as data-only compatibility fields, but never
+  // let them replace the current screenshot with a hand-built approximation.
+  if (step.image) {
+    renderImagePhone(root, step, player, state.chapter.audience === 'teacher' ? 'teacher' : 'student')
     return
   }
   // 上一步可能是宽幅图（覆盖了舞台内容），切回手机壳时需重建结构
@@ -663,7 +723,7 @@ export function renderPhone(
       step.scrollNotes ?? [],
       noteLayer,
       () => {
-        if (cta.anchorSelector && btn) alignCtaToAnchor(screen, cta, btn)
+        if (btn) revealCtaAfterScroll(screen, canvas, cta, btn)
       }
     )
   } else {
