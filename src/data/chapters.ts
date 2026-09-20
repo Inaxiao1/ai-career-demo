@@ -27,6 +27,17 @@ export interface ScrollNote {
   imageY?: number
 }
 
+export interface FormFlow {
+  /** 点击后切换到与小程序填充状态一致的截图。 */
+  filledImage: string
+  /** 滚动结束后居中出现的第一步引导。 */
+  fillTarget: Omit<Hotspot, 'label'> & { label: string }
+  /** 自动填充完成后，指向页面真实提交按钮的第二步引导。 */
+  generateTarget: Omit<Hotspot, 'label'> & { label: string }
+  /** 点击提交后进入的结果展示步骤。 */
+  goto: JumpTarget
+}
+
 /** 跨章节跳转目标（章节下标 + 章内步骤下标） */
 export interface JumpTarget {
   chapter: number
@@ -84,6 +95,8 @@ export interface Step {
     /** 自动滚动结束后，用真实页面元素的位置校准索引球。 */
     anchorSelector?: string
   }
+  /** 表单页的连续引导：滚动浏览 → 补充信息 → 生成结果。 */
+  formFlow?: FormFlow
   /** 学生端完成后的角色承接页；保留在学生流程中，点击后进入教师端。 */
   handoffView?: 'teacher'
   /** 短页面的点击入口保持原比例，避免聚焦底部导航时遮住页面主体。 */
@@ -182,9 +195,15 @@ const STUDENT_SCROLL_NOTES = {
     },
   ] satisfies ScrollNote[],
   planning: [
-    { progress: 0.14, x: 28, imageY: 0.28, title: '让 AI 生成专属路径', detail: '补充目标岗位和个人情况，让 AI 生成更贴合你的求职规划。' },
-    { progress: 0.48, x: 72, imageY: 0.52, title: '把经历变成规划依据', detail: '导入简历或补充项目、校园经历，让 AI 判断优势和准备重点。' },
-    { progress: 0.82, x: 50, imageY: 0.72, title: '从目标进入执行', detail: '确认经历与期望后，生成可以继续执行的求职成长路径。' },
+    { progress: 0.14, x: 28, imageY: 0.27, title: '先补齐基础画像', detail: '姓名、专业和毕业届次会帮助 AI 建立你的求职画像。' },
+    { progress: 0.48, x: 72, imageY: 0.52, title: '补充经历与期望', detail: '岗位方向、项目经历和薪资期待会成为规划建议的依据。' },
+    { progress: 0.82, x: 50, imageY: 0.72, title: '生成可执行路径', detail: '信息完整后，AI 会给出匹配方向和分阶段行动安排。' },
+  ] satisfies ScrollNote[],
+  planningResult: [
+    { progress: 0.16, x: 28, imageY: 0.16, title: '先看个人核心情况', detail: 'AI 把你的性格、毕业时间、目标和当前卡点集中整理。' },
+    { progress: 0.43, x: 72, imageY: 0.4, title: '比较两条职业方向', detail: '每条方向都给出适配原因、目标公司和预期薪资。' },
+    { progress: 0.68, x: 28, imageY: 0.62, title: '把建议落到行动', detail: '时间规划把准备任务拆到现在、近期和后续阶段。' },
+    { progress: 0.86, x: 72, imageY: 0.82, title: '加入待办持续推进', detail: '看清下一步任务后，可直接加入待办并持续跟进。' },
   ] satisfies ScrollNote[],
   resume: [
     { progress: 0.14, x: 30, imageY: 0.3, title: '先确定简历表达风格', detail: '选择适合求职方向的模板，让后续内容保持统一结构。' },
@@ -375,11 +394,26 @@ export const chapters: Chapter[] = [
       {
         caption: '求职规划 · AI 定制成长路径',
         detail:
-          '进入求职规划后，按小程序原始比例展示基本信息、简历导入、性格、毕业届次和意向岗位等内容；底部固定按钮用于生成完整求职规划。',
+          '进入求职规划后，先按小程序原始比例浏览基本信息、经历与期望。滚动结束后点击「补充信息」，演示自动填入表单，再点击「生成求职规划」查看 AI 结果。',
         image: 'assets/shots/current/student-planning-long.png',
         studentView: 'planning',
         autoScroll: true,
         scrollNotes: STUDENT_SCROLL_NOTES.planning,
+        formFlow: {
+          filledImage: 'assets/shots/current/student-planning-filled-long.png',
+          fillTarget: { x: 50, y: 50, label: '点击补充信息' },
+          generateTarget: { x: 50, y: 91, label: '点击生成求职规划' },
+          goto: { chapter: 1, step: 1 },
+        },
+      },
+      {
+        caption: '求职规划结果 · AI 生成个人行动路径',
+        detail:
+          '提交完整信息后进入小程序真实结果页：先看个人核心情况，再比较两条职业方向，最后查看时间规划和待办任务。全部内容展示完成后，再返回学生首页。',
+        image: 'assets/shots/current/student-planning-result-long.png',
+        studentView: 'planning',
+        autoScroll: true,
+        scrollNotes: STUDENT_SCROLL_NOTES.planningResult,
         clickTarget: { x: 7, y: 5, label: '返回学生首页', goto: { chapter: 0, step: 2 } },
       },
     ],

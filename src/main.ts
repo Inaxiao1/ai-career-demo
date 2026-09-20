@@ -9,10 +9,10 @@ createPhone(document.getElementById('stage')!)
 
 player.subscribe((state) => renderPhone(document.getElementById('stage')!, state, player))
 
-// 键盘左右方向键翻页；引导步骤（有点击索引点）不允许键盘跳过
+// 键盘左右方向键翻页；带点击引导或连续表单引导的步骤不允许跳过
 document.addEventListener('keydown', (e) => {
   const s = player.getState()
-  const guided = !!s.chapter.steps[s.stepIndex].clickTarget
+  const guided = !!s.chapter.steps[s.stepIndex].clickTarget || !!s.chapter.steps[s.stepIndex].formFlow
   if ((e.key === 'ArrowRight' || e.key === ' ') && !guided) player.next()
   if (e.key === 'ArrowLeft') player.prev()
 })

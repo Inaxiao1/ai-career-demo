@@ -1331,6 +1331,10 @@ body::after {
   object-fit: initial;
   user-select: none;
 }
+.image-phone.form-filling .phone-shot {
+  filter: saturate(.72) brightness(1.03);
+  transition: filter .3s ease;
+}
 .image-phone .hotspot-layer,
 .image-phone .pin-layer {
   position: absolute;

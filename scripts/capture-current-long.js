@@ -76,6 +76,10 @@ async function writeImage(image, name) {
 
 async function captureScrollView(miniProgram, systemInfo, tempDir, config) {
   const page = await openPage(miniProgram, config.route, config.tab)
+  if (config.prepare) {
+    await config.prepare(page)
+    await sleep(500)
+  }
   const scrollView = await page.$(config.scrollSelector)
   if (!scrollView || typeof scrollView.scrollHeight !== 'function') {
     throw new Error(`${config.name}: missing scroll view ${config.scrollSelector}`)
@@ -136,6 +140,60 @@ async function captureScrollView(miniProgram, systemInfo, tempDir, config) {
   }
 
   await writeImage(output, config.output)
+}
+
+const planningDemoData = {
+  name: '张同学',
+  major: '计算机科学与技术',
+  personality: '外向',
+  graduationYear: '2026届',
+  targetPosition: '产品岗',
+  expectStartup: '否',
+  internshipCount: '没有',
+  internshipExperience: '校园 AI 求职助手项目 · 负责需求分析、原型设计和用户访谈',
+  schoolExperience: '校学生会产品部负责人；获得产品设计竞赛一等奖',
+  expectedSalary: '20万内',
+  schoolType: '其他',
+  isFormValid: true,
+  resumeImported: false,
+  resumeFileName: '',
+  resumeData: null,
+}
+
+async function preparePlanningFilled(page) {
+  await page.setData(planningDemoData)
+}
+
+async function preparePlanningResult(page) {
+  await page.setData({
+    step: 'result',
+    reportData: {
+      name: planningDemoData.name,
+      basicInfo: {
+        personality: '外向，善于沟通协作',
+        experience: '2026届 · 计算机科学与技术',
+        target: '产品岗 · AI产品方向',
+        painPoints: '缺少完整的产品实习经历，需要补足作品与面试表达',
+      },
+      primaryJob: {
+        title: 'AI产品经理',
+        reason: '具备技术背景和用户需求分析意识，适合从 AI 产品实践切入。',
+        companies: '互联网平台、AI 创业公司、企业服务团队',
+        salary: '12-20K',
+      },
+      secondaryJob: {
+        title: '产品运营',
+        reason: '沟通表达和活动组织能力可以迁移到用户增长与产品运营场景。',
+        companies: '内容平台、教育科技公司、智能硬件团队',
+        salary: '8-15K',
+      },
+      timeline: [
+        { period: '现在 - 1个月', content: '完成产品分析作品集，补齐用户访谈和需求文档案例。' },
+        { period: '1 - 3个月', content: '完成一段产品或运营实践，针对目标岗位进行 3 次模拟面试。' },
+        { period: '3 - 6个月', content: '集中投递 AI 产品岗位，每周复盘投递反馈并持续优化简历。' },
+      ],
+    },
+  })
 }
 
 async function capturePageScroll(miniProgram, systemInfo, tempDir, config) {
@@ -237,6 +295,23 @@ const studentCaptures = [
     scrollSelector: '.form-scroll',
     bottomSelector: '.submit-bar',
     output: 'student-planning-long.png',
+  },
+  {
+    type: 'scroll',
+    name: 'student-planning-filled-long',
+    route: '/pages/career-planning/career-planning',
+    scrollSelector: '.form-scroll',
+    bottomSelector: '.submit-bar',
+    prepare: preparePlanningFilled,
+    output: 'student-planning-filled-long.png',
+  },
+  {
+    type: 'scroll',
+    name: 'student-planning-result-long',
+    route: '/pages/career-planning/career-planning',
+    scrollSelector: '.result-scroll',
+    prepare: preparePlanningResult,
+    output: 'student-planning-result-long.png',
   },
   {
     type: 'scroll',

@@ -33,6 +33,22 @@ function ctaHtml(x: number, y: number, label?: string): string {
   `
 }
 
+function setCtaTarget(
+  button: HTMLButtonElement,
+  target: { x: number; y: number; label?: string }
+): void {
+  button.style.left = `${target.x}%`
+  button.style.top = `${target.y}%`
+  button.classList.toggle('edge-right', target.x > 80)
+  button.classList.toggle('edge-left', target.x < 20)
+  button.classList.toggle('edge-bottom', target.y > 76)
+  if (target.label) {
+    button.title = target.label
+    const label = button.querySelector<HTMLElement>('.cta-label')
+    if (label) label.textContent = target.label
+  }
+}
+
 // ---- 索引点聚焦放大 ----
 // CTA 亮起时手机整体放大，并把索引点平移到舞台视觉中心：
 // transform: scale(z) translate(t)，映射后索引点位置 = z * (h + t)，
@@ -461,6 +477,8 @@ function renderStudentView(root: HTMLElement, step: Step, player: Player): void 
 function renderImagePhone(root: HTMLElement, step: Step, player: Player, role: 'student' | 'teacher'): void {
   stopAutoScroll()
   const cta = step.clickTarget
+  const formFlow = step.formFlow
+  const interactionTarget = formFlow?.fillTarget ?? cta
   const auto = !!step.autoScroll
   const spots = (step.hotspots ?? [])
     .map(
@@ -477,7 +495,7 @@ function renderImagePhone(root: HTMLElement, step: Step, player: Player, role: '
           <img class="phone-shot" src="${step.image}" alt="小程序原页面截图" data-source-capture="${step.image}" draggable="false" />
           <div class="hotspot-layer">${spots}</div>
         </div>
-        <div class="pin-layer">${cta ? ctaHtml(cta.x, cta.y, cta.label) : ''}</div>
+        <div class="pin-layer">${interactionTarget ? ctaHtml(interactionTarget.x, interactionTarget.y, interactionTarget.label) : ''}</div>
       </div>
     </div>${step.scrollNotes?.length ? scrollNotesHtml(step.scrollNotes) : ''}`
 
@@ -487,7 +505,42 @@ function renderImagePhone(root: HTMLElement, step: Step, player: Player, role: '
   const img = root.querySelector<HTMLImageElement>('.phone-shot')!
   const btn = root.querySelector<HTMLButtonElement>('.hotspot-cta')
   const notes = root.querySelector<HTMLElement>('.scroll-note-layer')
-  if (btn && cta) btn.addEventListener('click', () => player.goto(cta.goto))
+  let formPhase: 'fill' | 'generate' = 'fill'
+
+  const handleAction = () => {
+    if (!btn) return
+    if (!formFlow && cta) {
+      player.goto(cta.goto)
+      return
+    }
+    if (!formFlow || formPhase === 'generate') {
+      if (formFlow) player.goto(formFlow.goto)
+      return
+    }
+
+    formPhase = 'generate'
+    btn.style.pointerEvents = 'none'
+    phone.classList.add('form-filling')
+    setCtaTarget(btn, { ...formFlow.fillTarget, label: '正在补充信息…' })
+
+    let finalized = false
+    const finalizeFill = () => {
+      if (finalized) return
+      finalized = true
+      syncLayout()
+      phone.classList.remove('form-filling')
+      btn.style.pointerEvents = 'auto'
+      setCtaTarget(btn, formFlow.generateTarget)
+    }
+    const swapImage = () => {
+      img.addEventListener('load', finalizeFill, { once: true })
+      img.src = formFlow.filledImage
+      if (img.complete && img.naturalHeight > 0) requestAnimationFrame(finalizeFill)
+    }
+    window.setTimeout(swapImage, 650)
+  }
+
+  if (btn && (cta || formFlow)) btn.addEventListener('click', handleAction)
 
   const syncLayout = () => syncShotRatio(phone, screen, canvas, img)
   img.addEventListener('load', syncLayout, { once: true })
@@ -512,9 +565,13 @@ function renderImagePhone(root: HTMLElement, step: Step, player: Player, role: '
       canvas,
       step.scrollNotes ?? [],
       notes,
-      cta
+      interactionTarget
         ? () => {
-            const aligned = revealCtaAfterScroll(screen, canvas, cta, btn!)
+            if (formFlow) {
+              setCtaTarget(btn!, formFlow.fillTarget)
+              return
+            }
+            const aligned = revealCtaAfterScroll(screen, canvas, cta!, btn!)
             applyFocusZoom(phone, aligned.x, aligned.y)
           }
         : undefined
