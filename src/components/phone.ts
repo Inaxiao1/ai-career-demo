@@ -39,7 +39,6 @@ function ctaHtml(x: number, y: number, label?: string): string {
 // 令其为中心（0）即 t = -h，故 tx = (50-x)%、ty = (50-y)%。
 // 手机被放大平移后溢出部分由 .glass-card overflow:hidden 裁掉。
 const FOCUS_ZOOM = 1.5
-const PRESENTATION_ZOOM = 1.55
 const DEFAULT_SHOT_WIDTH = 516
 const DEFAULT_SHOT_HEIGHT = 1120
 
@@ -61,8 +60,10 @@ function applyFocusZoom(phone: HTMLElement, x: number, y: number): void {
 function applyPresentationFocus(phone: HTMLElement): void {
   const stage = phone.closest<HTMLElement>('.stage')
   const compact = !!stage && stage.clientWidth < 900
-  const zoom = compact ? 1.38 : PRESENTATION_ZOOM
-  const tx = compact ? -23 : -22
+  // Keep the shell enlargement restrained so the source capture stays sharp
+  // while the phone moves left to make room for the notes column.
+  const zoom = compact ? 1.04 : 1.08
+  const tx = compact ? -14 : -18
   phone.classList.add('presentation-focus')
   phone.style.setProperty('--zoom', String(zoom))
   phone.style.setProperty('--tx', `${tx}%`)
@@ -90,10 +91,87 @@ function syncShotRatio(
 ): void {
   const width = img.naturalWidth || DEFAULT_SHOT_WIDTH
   const height = img.naturalHeight || DEFAULT_SHOT_HEIGHT
-  phone.style.setProperty('--shot-ratio', `${width} / ${height}`)
+  // The phone is always the source viewport. A long capture belongs inside the
+  // viewport; its document height must never change the phone shell ratio.
+  phone.style.setProperty('--shot-ratio', `${DEFAULT_SHOT_WIDTH} / ${DEFAULT_SHOT_HEIGHT}`)
   if (img.naturalWidth && img.naturalHeight && screen.clientWidth) {
-    canvas.style.height = `${screen.clientWidth * height / width}px`
+    const sourceHeight = screen.clientWidth * height / width
+    canvas.style.height = `${sourceHeight}px`
+    canvas.style.removeProperty('--capture-scale')
+    img.style.width = '100%'
+    img.style.marginLeft = '0'
   }
+}
+
+function alignCtaToImage(
+  screen: HTMLElement,
+  canvas: HTMLElement,
+  cta: NonNullable<Step['clickTarget']>,
+  button: HTMLElement
+): { x: number; y: number } {
+  const img = canvas.querySelector<HTMLImageElement>('.phone-shot')
+  const screenRect = screen.getBoundingClientRect()
+  const imageRect = img?.getBoundingClientRect()
+  if (!imageRect || !screenRect.width || !screenRect.height) {
+    button.style.left = `${cta.x}%`
+    button.style.top = `${cta.y}%`
+    return { x: cta.x, y: cta.y }
+  }
+  const x = Math.max(
+    4,
+    Math.min(96, ((imageRect.left + imageRect.width * cta.x / 100 - screenRect.left) / screenRect.width) * 100)
+  )
+  const y = Math.max(
+    4,
+    Math.min(96, ((imageRect.top + imageRect.height * cta.y / 100 - screenRect.top) / screenRect.height) * 100)
+  )
+  button.style.left = `${x.toFixed(1)}%`
+  button.style.top = `${y.toFixed(1)}%`
+  return { x, y }
+}
+
+function revealImageCtaAfterScroll(
+  screen: HTMLElement,
+  canvas: HTMLElement,
+  cta: NonNullable<Step['clickTarget']>,
+  button: HTMLElement
+): { x: number; y: number } {
+  const img = canvas.querySelector<HTMLImageElement>('.phone-shot')
+  if (!img || !screen.clientWidth || !screen.clientHeight) {
+    return alignCtaToImage(screen, canvas, cta, button)
+  }
+
+  const currentScroll = Math.max(0, Number(canvas.style.transform.match(/translateY\((-?[\d.]+)px\)/)?.[1] ?? 0) * -1)
+  const distance = Math.max(0, canvas.scrollHeight - screen.clientHeight)
+  const targetInCanvas = img.offsetTop + img.offsetHeight * cta.y / 100
+  const targetScroll = Math.max(0, Math.min(distance, targetInCanvas - screen.clientHeight * 0.48))
+  const x = Math.max(
+    4,
+    Math.min(96, ((img.offsetLeft + img.offsetWidth * cta.x / 100) / screen.clientWidth) * 100)
+  )
+  const y = Math.max(4, Math.min(96, ((targetInCanvas - targetScroll) / screen.clientHeight) * 100))
+
+  if (Math.abs(targetScroll - currentScroll) < 1) {
+    return alignCtaToImage(screen, canvas, cta, button)
+  }
+
+  screen.classList.remove('scroll-done')
+  const start = performance.now()
+  const duration = 720
+  const animateBack = (now: number) => {
+    const progress = Math.min(1, (now - start) / duration)
+    const eased = 1 - Math.pow(1 - progress, 3)
+    const scroll = currentScroll + (targetScroll - currentScroll) * eased
+    canvas.style.transform = `translateY(-${scroll.toFixed(1)}px)`
+    if (progress < 1) {
+      requestAnimationFrame(animateBack)
+      return
+    }
+    alignCtaToImage(screen, canvas, cta, button)
+    screen.classList.add('scroll-done')
+  }
+  requestAnimationFrame(animateBack)
+  return { x, y }
 }
 
 /**
@@ -135,16 +213,14 @@ function revealCtaAfterScroll(
   canvas: HTMLElement,
   cta: NonNullable<Step['clickTarget']>,
   button: HTMLElement
-): void {
+): { x: number; y: number } {
   if (!cta.anchorSelector) {
-    alignCtaToAnchor(screen, cta, button)
-    return
+    return revealImageCtaAfterScroll(screen, canvas, cta, button)
   }
 
   const anchor = canvas.querySelector<HTMLElement>(cta.anchorSelector)
   if (!anchor) {
-    alignCtaToAnchor(screen, cta, button)
-    return
+    return revealImageCtaAfterScroll(screen, canvas, cta, button)
   }
 
   const screenRect = screen.getBoundingClientRect()
@@ -152,8 +228,7 @@ function revealCtaAfterScroll(
   const margin = screenRect.height * 0.08
   const alreadyVisible = anchorRect.top >= screenRect.top + margin && anchorRect.bottom <= screenRect.bottom - margin
   if (alreadyVisible) {
-    alignCtaToAnchor(screen, cta, button)
-    return
+    return alignCtaToAnchor(screen, cta, button)
   }
 
   const currentScroll = Math.max(0, Number(canvas.style.transform.match(/translateY\((-?[\d.]+)px\)/)?.[1] ?? 0) * -1)
@@ -166,8 +241,7 @@ function revealCtaAfterScroll(
   )
 
   if (Math.abs(targetScroll - currentScroll) < 1) {
-    alignCtaToAnchor(screen, cta, button)
-    return
+    return alignCtaToAnchor(screen, cta, button)
   }
 
   screen.classList.remove('scroll-done')
@@ -186,6 +260,7 @@ function revealCtaAfterScroll(
     alignCtaToAnchor(screen, cta, button)
   }
   requestAnimationFrame(animateBack)
+  return alignCtaToAnchor(screen, cta, button)
 }
 
 function scrollNotesHtml(notes: NonNullable<Step['scrollNotes']>): string {
@@ -229,9 +304,8 @@ function updateScrollNotes(
   const dist = Math.max(0, canvas.scrollHeight - screen.clientHeight)
   const screenRect = screen.getBoundingClientRect()
   const screenCenterY = screenRect.top + screenRect.height / 2
-  if (runtime.activeIndex >= 0 && now >= runtime.activeUntil) {
-    runtime.activeIndex = -1
-  }
+  const image = canvas.querySelector<HTMLImageElement>('.phone-shot')
+  const imageRect = image?.getBoundingClientRect()
 
   // 批注按滚动顺序只触发一次，并保持固定展示时长，避免被下一条提前抢占。
   if (runtime.activeIndex < 0 && runtime.nextIndex < notes.length) {
@@ -243,9 +317,21 @@ function updateScrollNotes(
     const centered = candidateRect
       ? Math.abs(candidateRect.top + candidateRect.height / 2 - screenCenterY) <= screenRect.height * 0.2
       : false
+    const candidateImageY = candidate.imageY ?? candidate.progress
+    const candidateInCanvas = image
+      ? image.offsetTop + image.offsetHeight * candidateImageY
+      : screen.clientHeight / 2 + dist * candidate.progress
+    const candidateScroll = Math.max(0, Math.min(dist, candidateInCanvas - screen.clientHeight / 2))
+    const candidateProgress = dist > 0 ? candidateScroll / dist : candidate.progress
+    const candidateViewportY = imageRect
+      ? imageRect.top + imageRect.height * candidateImageY
+      : screenCenterY
+    const imageTargetVisible =
+      candidateViewportY >= screenRect.top + screenRect.height * 0.1 &&
+      candidateViewportY <= screenRect.bottom - screenRect.height * 0.1
     const ready = candidateAnchor
       ? (centered && progress >= Math.max(0, candidate.progress - 0.12)) || progress >= candidate.progress
-      : progress >= candidate.progress
+      : (progress >= Math.max(0, candidateProgress - 0.012) && imageTargetVisible) || progress >= 0.998
     if (ready) {
       runtime.activeIndex = runtime.nextIndex
       runtime.nextIndex += 1
@@ -264,14 +350,19 @@ function updateScrollNotes(
     ? canvas.querySelector<HTMLElement>(note.anchorSelector)
     : null
   const anchorRect = anchor?.getBoundingClientRect()
-  const canvasRect = canvas.getBoundingClientRect()
-  const targetY = anchorRect
+  const rawTargetY = anchorRect
     ? anchorRect.top + anchorRect.height / 2 - screenRect.top
-    : note.imageY != null
-      ? canvasRect.top + canvasRect.height * note.imageY - screenRect.top
+    : imageRect
+      ? imageRect.top + imageRect.height * (note.imageY ?? note.progress) - screenRect.top
       : screenRect.height / 2 + dist * (note.progress - progress) * (screenRect.height / screen.clientHeight)
+  // The line endpoint stays inside the visible reading area. Normally the
+  // scroll pause has already centered it; clamping is a final guard for the
+  // first and last items of a page.
+  const targetY = Math.max(screenRect.height * 0.14, Math.min(screenRect.height * 0.86, rawTargetY))
   const targetX = anchorRect
     ? anchorRect.left + anchorRect.width / 2
+    : imageRect
+      ? imageRect.left + imageRect.width * note.x / 100
     : screenRect.left + (screenRect.width * note.x) / 100
   noteEl.style.top = `${screenRect.top - layerRect.top + targetY}px`
   const card = noteEl.querySelector<HTMLElement>('.scroll-note-card')!
@@ -413,6 +504,7 @@ function renderImagePhone(root: HTMLElement, step: Step, player: Player, role: '
   // 真实小程序截图先保持完整比例浏览；只有引导索引球出现时才聚焦放大，
   // 避免首页或短页面在展示阶段被提前裁切。
   resetFocusZoom(phone)
+  applyPresentationFocus(phone)
   const begin = () => {
     syncLayout()
     startAutoScroll(
@@ -422,8 +514,8 @@ function renderImagePhone(root: HTMLElement, step: Step, player: Player, role: '
       notes,
       cta
         ? () => {
-            revealCtaAfterScroll(screen, canvas, cta, btn!)
-            applyFocusZoom(phone, cta.x, cta.y)
+            const aligned = revealCtaAfterScroll(screen, canvas, cta, btn!)
+            applyFocusZoom(phone, aligned.x, aligned.y)
           }
         : undefined
     )
@@ -582,17 +674,16 @@ function startAutoScroll(
   onDone?: () => void
 ): void {
   const dist = Math.max(0, canvas.scrollHeight - screen.clientHeight)
-  const hasPresentation = notes.length > 0 || !!onDone
-  if (dist <= 2 && !hasPresentation) {
+  // A page that already fits in one viewport should remain still. Do not turn a
+  // short source capture into a fake scroll merely to accommodate annotations.
+  if (dist <= 2) {
     hideScrollNotes(noteLayer)
     screen.classList.add('scroll-done')
+    onDone?.()
     return
   }
-  // 长图按每屏约 11 秒缓慢浏览；没有可滚动距离时仍保留阅读停留，
-  // 让观众先看完整的当前页，再出现索引球和聚焦动画。
-  const duration = dist > 2
-    ? Math.min(24000, Math.max(9000, (dist / screen.clientHeight) * 11000))
-    : Math.max(10000, notes.length * 3000)
+  // 长图按每屏约 11 秒缓慢浏览，并在每个批注处暂停固定时长。
+  const duration = Math.min(24000, Math.max(9000, (dist / screen.clientHeight) * 11000))
   const t0 = performance.now()
   let raf = 0
   const noteRuntime: ScrollNoteRuntime = {
@@ -600,34 +691,38 @@ function startAutoScroll(
     activeIndex: -1,
     activeUntil: 0,
   }
-  let noteHideTimer: number | null = null
+  let pausedTotal = 0
+  let pauseStarted: number | null = null
   const tick = (t: number) => {
-    const p = Math.min(1, (t - t0) / duration)
+    if (pauseStarted !== null && noteRuntime.activeIndex >= 0 && t >= noteRuntime.activeUntil) {
+      pausedTotal += t - pauseStarted
+      pauseStarted = null
+      noteRuntime.activeIndex = -1
+    }
+    const activePause = pauseStarted === null ? 0 : t - pauseStarted
+    const elapsed = Math.max(0, t - t0 - pausedTotal - activePause)
+    const p = Math.min(1, elapsed / duration)
     // 慢快慢三段式缓动（easeInOutCubic）：起步慢 → 中途加速快滑 → 临近底部减速停住
     const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2
     canvas.style.transform = `translateY(-${(dist * e).toFixed(1)}px)`
+    const previousActive = noteRuntime.activeIndex
     updateScrollNotes(screen, canvas, noteLayer, notes, e, t, noteRuntime)
-    if (p < 1) {
+    if (previousActive < 0 && noteRuntime.activeIndex >= 0 && pauseStarted === null) {
+      pauseStarted = t
+    }
+    const notesComplete = noteRuntime.nextIndex >= notes.length && noteRuntime.activeIndex < 0
+    if (p < 1 || !notesComplete) {
       raf = requestAnimationFrame(tick)
     } else {
+      hideScrollNotes(noteLayer)
       screen.classList.add('scroll-done')
       onDone?.()
-      const remaining = Math.max(0, noteRuntime.activeUntil - t)
-      if (noteRuntime.activeIndex >= 0 && remaining > 0) {
-        noteHideTimer = window.setTimeout(() => {
-          hideScrollNotes(noteLayer)
-          cancelAutoScroll = null
-        }, remaining)
-      } else {
-        hideScrollNotes(noteLayer)
-        cancelAutoScroll = null
-      }
+      cancelAutoScroll = null
     }
   }
   raf = requestAnimationFrame(tick)
   cancelAutoScroll = () => {
     cancelAnimationFrame(raf)
-    if (noteHideTimer !== null) window.clearTimeout(noteHideTimer)
     hideScrollNotes(noteLayer)
   }
 }
