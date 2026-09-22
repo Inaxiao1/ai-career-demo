@@ -22,6 +22,10 @@ function edgeClass(x: number): string {
   return x > 80 ? ' edge-right' : x < 20 ? ' edge-left' : ''
 }
 
+function verticalEdgeClass(y: number): string {
+  return y > 76 ? ' edge-bottom' : y < 24 ? ' edge-top' : ''
+}
+
 /** 可点击引导索引点：只保留水波纹扩散提示；label 省略时不显示文字 */
 function ctaHtml(x: number, y: number, label?: string): string {
   const verticalClass = y > 76 ? ' edge-bottom' : y < 24 ? ' edge-top' : ''
@@ -57,6 +61,7 @@ function setCtaTarget(
 const FOCUS_ZOOM = 1.5
 const DEFAULT_SHOT_WIDTH = 516
 const DEFAULT_SHOT_HEIGHT = 1120
+const INTERVIEW_TAIL_EXTENSION_PX = 105
 
 function applyFocusZoom(phone: HTMLElement, x: number, y: number): void {
   const stage = phone.closest<HTMLElement>('.stage')
@@ -112,8 +117,18 @@ function syncShotRatio(
   phone.style.setProperty('--shot-ratio', `${DEFAULT_SHOT_WIDTH} / ${DEFAULT_SHOT_HEIGHT}`)
   if (img.naturalWidth && img.naturalHeight && screen.clientWidth) {
     const sourceHeight = screen.clientWidth * height / width
-    canvas.style.height = `${sourceHeight}px`
-    canvas.style.removeProperty('--capture-scale')
+    const tailExtension = canvas.classList.contains('interview-form-canvas')
+      ? screen.clientWidth * INTERVIEW_TAIL_EXTENSION_PX / width
+      : 0
+    canvas.style.height = `${sourceHeight + tailExtension}px`
+    // The supplemental upload card is laid out after the source capture. Use
+    // the displayed image ratio so it meets the preceding form fields at the
+    // same scale instead of growing into them through the negative overlap.
+    if (canvas.classList.contains('interview-form-canvas')) {
+      canvas.style.setProperty('--capture-scale', String(screen.clientWidth / width))
+    } else {
+      canvas.style.removeProperty('--capture-scale')
+    }
     img.style.width = '100%'
     img.style.marginLeft = '0'
   }
@@ -294,11 +309,33 @@ function scrollNotesHtml(notes: NonNullable<Step['scrollNotes']>): string {
     </div>`
 }
 
+function interviewFormTailHtml(): string {
+  return `
+    <div class="interview-form-tail" aria-hidden="true">
+      <div class="interview-form-tail-card">
+        <div class="interview-form-tail-header">
+          <strong>简历上传</strong>
+          <span>可选</span>
+        </div>
+        <div class="interview-form-tail-content">
+          <div class="interview-upload-area">
+            <b>📄</b>
+            <strong>点击上传简历</strong>
+            <small>支持 PDF/DOCX 格式，可自动解析</small>
+          </div>
+        </div>
+      </div>
+    </div>`
+}
+
 function hideScrollNotes(layer: HTMLElement | null): void {
   layer?.querySelectorAll('.scroll-note').forEach((note) => note.classList.remove('active'))
 }
 
 const SCROLL_NOTE_DISPLAY_MS = 2800
+const SCROLL_DURATION_PER_VIEWPORT_MS = 7600
+const SCROLL_MIN_DURATION_MS = 6000
+const SCROLL_MAX_DURATION_MS = 18000
 
 interface ScrollNoteRuntime {
   nextIndex: number
@@ -483,16 +520,18 @@ function renderImagePhone(root: HTMLElement, step: Step, player: Player, role: '
   const spots = (step.hotspots ?? [])
     .map(
       (h, i) =>
-        `<div class="hotspot${edgeClass(h.x)}" style="left:${h.x}%;top:${h.y}%"><span class="hotspot-pin"><i class="hotspot-num">${i + 1}</i></span><span class="hotspot-label">${h.label}</span></div>`
+        `<div class="hotspot${edgeClass(h.x)}${verticalEdgeClass(h.y)}" style="left:${h.x}%;top:${h.y}%"><span class="hotspot-pin"><i class="hotspot-num">${i + 1}</i></span><span class="hotspot-label">${h.label}</span></div>`
     )
     .join('')
   const viewClass = role === 'teacher' ? 'teacher-screen' : 'student-screen'
+  const hasInterviewTail = formFlow?.captureTail === 'interview-form'
   root.innerHTML = `
     <div class="phone image-phone ${role}-phone${auto ? ' auto-scroll' : ''}" style="--shot-ratio: ${DEFAULT_SHOT_WIDTH} / ${DEFAULT_SHOT_HEIGHT}">
       <div class="phone-notch"></div>
       <div class="phone-screen ${viewClass} image-screen">
-        <div class="image-scroll-canvas">
+        <div class="image-scroll-canvas${hasInterviewTail ? ' interview-form-canvas' : ''}">
           <img class="phone-shot" src="${step.image}" alt="小程序原页面截图" data-source-capture="${step.image}" draggable="false" />
+          ${hasInterviewTail ? interviewFormTailHtml() : ''}
           <div class="hotspot-layer">${spots}</div>
         </div>
         <div class="pin-layer">${interactionTarget ? ctaHtml(interactionTarget.x, interactionTarget.y, interactionTarget.label) : ''}</div>
@@ -531,6 +570,12 @@ function renderImagePhone(root: HTMLElement, step: Step, player: Player, role: '
       phone.classList.remove('form-filling')
       btn.style.pointerEvents = 'auto'
       setCtaTarget(btn, formFlow.generateTarget)
+      // The second action is deliberately a normal-page handoff: keep the
+      // filled capture at its original scale and place the index ball on the
+      // real bottom action instead of zooming into that action.
+      requestAnimationFrame(() => {
+        resetFocusZoom(phone)
+      })
     }
     const swapImage = () => {
       img.addEventListener('load', finalizeFill, { once: true })
@@ -547,9 +592,21 @@ function renderImagePhone(root: HTMLElement, step: Step, player: Player, role: '
   syncLayout()
 
   if (!auto) {
+    // 静态截图没有自动滚动完成回调，但它的索引球同样放在 pin-layer；
+    // 可选的短暂停留让页面先被看清，再显示点击引导。
     resetFocusZoom(phone)
-    if (btn && cta && step.focusZoom !== false) {
-      requestAnimationFrame(() => applyFocusZoom(phone, cta.x, cta.y))
+    const revealCta = () => {
+      screen.classList.add('scroll-done')
+      if (btn && cta && step.focusZoom !== false) {
+        requestAnimationFrame(() => applyFocusZoom(phone, cta.x, cta.y))
+      }
+      cancelAutoScroll = null
+    }
+    if (btn && cta && step.ctaRevealDelayMs && step.ctaRevealDelayMs > 0) {
+      const timer = window.setTimeout(revealCta, step.ctaRevealDelayMs)
+      cancelAutoScroll = () => window.clearTimeout(timer)
+    } else {
+      revealCta()
     }
     return
   }
@@ -568,7 +625,14 @@ function renderImagePhone(root: HTMLElement, step: Step, player: Player, role: '
       interactionTarget
         ? () => {
             if (formFlow) {
-              setCtaTarget(btn!, formFlow.fillTarget)
+              // 点击填充后，滚动结束回调可能晚到；不能把已经切换到生成阶段的
+              // 按钮重新改回“点击补充信息”。
+              if (formPhase === 'fill') {
+                setCtaTarget(btn!, formFlow.fillTarget)
+                // 表单引导也要把真实操作点带到视觉中心；生成按钮出现后继续保持
+                // 这组放大构图，方便用户看清自动填充后的页面与提交入口。
+                applyFocusZoom(phone, formFlow.fillTarget.x, formFlow.fillTarget.y)
+              }
               return
             }
             const aligned = revealCtaAfterScroll(screen, canvas, cta!, btn!)
@@ -671,6 +735,8 @@ function teacherViewMarkup(view: NonNullable<Step['teacherView']>): string {
       return `<div class="teacher-demo teacher-course-detail-page">${common}<div class="teacher-page-title"><small>COURSE PROGRESS</small><strong>求职基础课</strong><span>教师预览 · 6 章节</span></div><div class="teacher-course-hero"><div class="teacher-course-cover">简历</div><div><strong>求职基础课</strong><small>帮助学生完成从目标定位到简历提交</small><b>班级平均进度 70%</b></div></div><div class="teacher-detail-block"><div><strong>班级学习进度</strong><b>4 / 6 人已开始</b></div><i><em style="width:70%"></em></i><small>3 人已完成 · 2 人学习中 · 1 人低于 40%</small></div><div class="teacher-course-chapters"><div><span>01</span><strong>认识自己的职业方向</strong><b>已完成</b></div><div><span>02</span><strong>拆解目标岗位要求</strong><b>已完成</b></div><div><span>03</span><strong>写出一份有效简历</strong><b class="pending">进行中</b></div><div><span>04</span><strong>用 AI 优化简历表达</strong><b class="pending">待开始</b></div><div><span>05</span><strong>投递前检查清单</strong><b class="pending">待开始</b></div></div><div class="teacher-next-action"><small>TEACHER ACTION</small><strong>给 1 位低进度学生发送学习提醒</strong><span>回到班级课程列表继续管理</span></div>${teacherNav('课程')}</div>`
     case 'course-feedback':
       return `<div class="teacher-demo teacher-course-feedback-page">${common}<div class="teacher-page-title"><small>COURSE LEARNING</small><strong>课程学习</strong><span>教师预览 · 大学生求职通识课</span></div><div class="teacher-course-hero"><div class="teacher-course-cover">通识</div><div><strong>大学生求职通识课</strong><small>从就业认知到拿到 Offer，建立完整求职方法论。</small><b>共 3 个章节 · 已推送课程</b></div></div><div class="teacher-preview-card-mini"><small>TEACHER PREVIEW</small><strong>课程内容预览</strong><span>下方直接查看本课班级学习反馈</span><button>分享给学生</button><em>已分享给 0 人</em></div><div class="teacher-feedback-card-mini"><div class="teacher-feedback-head-mini"><div><small>CLASS FEEDBACK</small><strong>班级学习反馈</strong></div><div><span>平均进度</span><b>67%</b></div></div><div class="teacher-feedback-stats"><div><b>6</b><span>班级人数</span></div><div><b>5</b><span>已开始</span></div><div class="pending"><b>1</b><span>未开始</span></div><div class="complete"><b>3</b><span>已完成</span></div></div><div class="teacher-feedback-alert"><strong>还有同学尚未开始</strong><span>赵同学</span><div><button>查看名单</button><button>提醒全部</button></div></div><div class="teacher-feedback-search">⌕&nbsp; 搜索姓名或账号</div><div class="teacher-feedback-filters"><span class="active">全部 6</span><span>未开始 1</span><span>学习中 2</span><span>已完成 3</span></div>${teacherStudent('赵同学', 'S005 · 信息管理', '运营专员', 0, '未开始', 'blue')}${teacherStudent('周同学', 'S003 · 数据科学', '数据分析', 67, '学习中', 'cyan')}${teacherStudent('李同学', 'S002 · 软件工程', '产品经理', 100, '已完成', 'violet')}${teacherStudent('张同学', 'S001 · 计算机科学', '前端开发', 100, '已完成', 'blue')}</div><div class="teacher-next-action"><small>TEACHER ACTION</small><strong>先提醒未开始学生，再查看章节进度</strong><span>把课程数据转成具体跟进动作</span><button class="teacher-feedback-remind">提醒全部 <span>›</span></button></div>${teacherNav('课程')}</div>`
+    case 'course-recommend-picker':
+      return teacherReferenceView('assets/shots/current/teacher-course-recommend-picker.png', '推荐给学生弹窗')
     case 'notice-feed':
       return `<div class="teacher-demo teacher-notice-feed-page">${common}<div class="teacher-page-title"><small>CLASS NOTICES</small><strong>通知</strong><span>班级通知 · 学习与求职提醒</span></div><div class="teacher-notice-stats"><div><strong>8</strong><small>已发布</small></div><div><strong>2</strong><small>待查看</small></div><div><strong>6</strong><small>班级学生</small></div></div><div class="teacher-filter teacher-filter-wide"><span class="active">全部</span><span>老师通知</span><span>系统消息</span></div><div class="teacher-list-title"><strong>通知列表</strong><small>最近更新</small></div><div class="teacher-notice-feed-card"><div class="notice-icon system">◎</div><div><strong>春招岗位推荐已更新</strong><small>系统消息 · 昨天 16:40</small><p>本周新增 12 个校招与实习岗位，欢迎查看。</p></div><b>›</b></div><div class="teacher-notice-feed-card"><div class="notice-icon">✉</div><div><strong>简历课程学习提醒</strong><small>老师通知 · 周一 10:00 · 6人已读</small><p>请完成第 3 章课程内容，并上传简历初稿。</p></div><b>›</b></div><div class="teacher-notice-feed-card unread"><div class="notice-icon">✉</div><div><strong>完成本周求职任务</strong><small>老师通知 · 今天 09:20 · 4人已读</small><p>请在周五前更新求职状态，并完成老师推送的简历课程。</p></div><b>›</b></div><div class="teacher-notice-entry"><div class="notice-icon">＋</div><div><strong>发布班级通知</strong><small>提醒学生更新状态或完成学习任务</small></div><b>›</b></div>${teacherNav('通知')}</div>`
     case 'notice-detail':
@@ -739,8 +805,12 @@ function startAutoScroll(
     onDone?.()
     return
   }
-  // 长图按每屏约 11 秒缓慢浏览，并在每个批注处暂停固定时长。
-  const duration = Math.min(24000, Math.max(9000, (dist / screen.clientHeight) * 11000))
+  // 长图按每屏约 7.6 秒浏览，并在每个批注处暂停固定时长。
+  // 连续滚动加快，但批注停留时间保持稳定，确保说明仍然读得清楚。
+  const duration = Math.min(
+    SCROLL_MAX_DURATION_MS,
+    Math.max(SCROLL_MIN_DURATION_MS, (dist / screen.clientHeight) * SCROLL_DURATION_PER_VIEWPORT_MS)
+  )
   const t0 = performance.now()
   let raf = 0
   const noteRuntime: ScrollNoteRuntime = {
@@ -852,7 +922,7 @@ export function renderPhone(
   const staticSpots = (step.hotspots ?? [])
     .map(
       (h, i) => `
-      <div class="hotspot${edgeClass(h.x)}" style="left:${h.x}%;top:${h.y}%">
+      <div class="hotspot${edgeClass(h.x)}${verticalEdgeClass(h.y)}" style="left:${h.x}%;top:${h.y}%">
         <span class="hotspot-pin"><i class="hotspot-num">${i + 1}</i></span>
         <span class="hotspot-label">${h.label}</span>
       </div>`
@@ -902,7 +972,7 @@ function renderStageImage(root: HTMLElement, step: Step, player: Player): void {
   const staticSpots = (step.hotspots ?? [])
     .map(
       (h, i) => `
-      <div class="hotspot${edgeClass(h.x)}" style="left:${h.x}%;top:${h.y}%">
+      <div class="hotspot${edgeClass(h.x)}${verticalEdgeClass(h.y)}" style="left:${h.x}%;top:${h.y}%">
         <span class="hotspot-pin"><i class="hotspot-num">${i + 1}</i></span>
         <span class="hotspot-label">${h.label}</span>
       </div>`

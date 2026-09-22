@@ -4,10 +4,31 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI 职业规划小程序 · 功能演示</title>
-  <link rel="stylesheet" href="src/style.css" />
+  <link rel="icon" type="image/png" href="assets/brand/hi-career-logo-transparent.png" />
+  <link rel="stylesheet" href="src/style.css?v=hi-career-rapid" />
 </head>
-<body>
-  <div class="scene">
+<body class="intro-active">
+  <div id="intro" class="intro-overlay" role="dialog" aria-modal="true" aria-label="HI CAREER 开场动画">
+    <div class="intro-route" aria-hidden="true">
+      <span class="intro-plane">
+        <span class="intro-plane-image"></span>
+      </span>
+    </div>
+    <div class="intro-content">
+      <div class="intro-wordmark" aria-label="HI CAREER">
+        <span class="intro-wordmark-line"></span>
+        <span class="intro-wordmark-image" role="img" aria-label="Hi Career"></span>
+        <span class="intro-wordmark-line"></span>
+      </div>
+      <p class="intro-subtitle">AI CAREER PLANNING MINIPROGRAM</p>
+      <button id="intro-enter" class="intro-enter" type="button" disabled aria-disabled="true">
+        <span>点击进入体验</span>
+        <b aria-hidden="true">↗</b>
+      </button>
+    </div>
+    <p class="intro-hint">A SMALL STEP TOWARD YOUR NEXT CAREER</p>
+  </div>
+  <div class="scene" aria-hidden="true">
     <main class="glass-card">
       <aside id="sidebar" class="sidebar"></aside>
       <section class="stage-wrap">
@@ -15,6 +36,6 @@
       </section>
     </main>
   </div>
-  <script src="dist/main.js"></script>
+  <script src="dist/main.js?v=hi-career-rapid"></script>
 </body>
 </html>

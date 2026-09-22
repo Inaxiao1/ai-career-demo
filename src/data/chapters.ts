@@ -36,6 +36,8 @@ export interface FormFlow {
   generateTarget: Omit<Hotspot, 'label'> & { label: string }
   /** 点击提交后进入的结果展示步骤。 */
   goto: JumpTarget
+  /** 长图底部需要补齐的原页面区块。 */
+  captureTail?: 'interview-form'
 }
 
 /** 跨章节跳转目标（章节下标 + 章内步骤下标） */
@@ -101,6 +103,8 @@ export interface Step {
   handoffView?: 'teacher'
   /** 短页面的点击入口保持原比例，避免聚焦底部导航时遮住页面主体。 */
   focusZoom?: boolean
+  /** 短页面先停留片刻展示内容，再显示点击引导。 */
+  ctaRevealDelayMs?: number
   /** 教师页面语义标签；仅保留用于旧引导配置，视觉仍以 image 截图为准。 */
   teacherView?:
     | 'dashboard'
@@ -113,6 +117,7 @@ export interface Step {
     | 'courses'
     | 'course-detail'
     | 'course-feedback'
+    | 'course-recommend-picker'
     | 'notice-feed'
     | 'notice-detail'
     | 'employment'
@@ -206,9 +211,7 @@ const STUDENT_SCROLL_NOTES = {
     { progress: 0.86, x: 72, imageY: 0.82, title: '加入待办持续推进', detail: '看清下一步任务后，可直接加入待办并持续跟进。' },
   ] satisfies ScrollNote[],
   resume: [
-    { progress: 0.14, x: 30, imageY: 0.3, title: '先确定简历表达风格', detail: '选择适合求职方向的模板，让后续内容保持统一结构。' },
-    { progress: 0.48, x: 70, imageY: 0.49, title: '比较模板的信息层级', detail: '从配色、版式和内容密度中，选出最适合自己的表达方式。' },
-    { progress: 0.82, x: 50, imageY: 0.68, title: '带着版式继续制作', detail: '确认模板后继续填写经历，生成可直接投递的简历版本。' },
+    { progress: 0.46, x: 50, imageY: 0.48, title: '先选择版式，再填写经历', detail: '先定下信息层级和表达风格，确认后进入简历录入。' },
   ] satisfies ScrollNote[],
   interview: [
     { progress: 0.14, x: 28, imageY: 0.25, title: '让 AI 进入真实岗位语境', detail: '输入公司、岗位和岗位要求，让问题围绕目标职位展开。' },
@@ -225,15 +228,36 @@ const STUDENT_SCROLL_NOTES = {
     { progress: 0.52, x: 70, title: '把真实面试交给 AI', detail: '上传已有录音，让系统按题目复盘回答中的表现和卡点。' },
     { progress: 0.82, x: 50, title: '形成下一次面试策略', detail: '结合录音、简历和面评结果，整理下一次可以直接采用的回答方法。' },
   ] satisfies ScrollNote[],
+  reviewHome: [
+    { progress: 0.18, x: 28, imageY: 0.31, title: '先了解面试突破器', detail: '真实语料和大厂面试经验，帮助你看清面试官关注什么。' },
+    { progress: 0.5, x: 72, imageY: 0.63, title: '上传录音或实时录音', detail: '把已有面试录音交给 AI，也可以直接开始一次新的面试记录。' },
+    { progress: 0.82, x: 50, imageY: 0.86, title: '沉淀到面试库', detail: '每次复盘结果都会保留下来，方便回看问题和准备下一轮。' },
+  ] satisfies ScrollNote[],
+  reviewInfo: [
+    { progress: 0.2, x: 28, imageY: 0.19, title: '确认录音与简历', detail: '先核对本次分析使用的录音和简历，保证复盘上下文完整。' },
+    { progress: 0.52, x: 72, imageY: 0.55, title: '补充面试配置', detail: '选择经验级别、应聘岗位和面试轮次，让分析更贴近目标场景。' },
+    { progress: 0.84, x: 50, imageY: 0.91, title: '开始生成复盘', detail: '确认信息后，AI 会继续完成转写、评分和面经整理。' },
+  ] satisfies ScrollNote[],
+  reviewResult: [
+    { progress: 0.16, x: 28, imageY: 0.12, title: '先看综合通过率', detail: '结果页先用总体评分和等级概括本次面试表现。' },
+    { progress: 0.42, x: 72, imageY: 0.31, title: '定位回答强弱项', detail: '维度评分把表达、逻辑和岗位匹配拆开，方便针对性练习。' },
+    { progress: 0.68, x: 28, imageY: 0.57, title: '阅读岗位结论', detail: '优势、改进点和岗位匹配度会汇总成下一轮准备重点。' },
+    { progress: 0.88, x: 72, imageY: 0.82, title: '带走下一轮面经', detail: '面经预览整理可执行的准备事项，之后可以返回继续探索。' },
+  ] satisfies ScrollNote[],
   jobs: [
     { progress: 0.18, x: 28, imageY: 0.24, title: '先缩小岗位范围', detail: '结合推荐、校招、实习和城市筛选，快速找到更匹配的机会。' },
     { progress: 0.5, x: 72, imageY: 0.48, title: '比较岗位关键信息', detail: '把公司、地点、岗位类型和薪资放在一起看，判断是否值得深入。' },
-    { progress: 0.82, x: 50, imageY: 0.68, title: '从机会进入行动', detail: '看完岗位列表后，继续用课程补齐目标岗位需要的能力。' },
+    { progress: 0.82, x: 50, imageY: 0.68, title: '从岗位卡片进入详情', detail: '点击具体岗位后，继续查看职位描述、任职要求和投递方式。' },
+  ] satisfies ScrollNote[],
+  jobDetail: [
+    { progress: 0.18, x: 28, imageY: 0.16, title: '先看岗位与公司', detail: '薪资、城市、公司规模和岗位标签先帮你判断是否值得深入。' },
+    { progress: 0.48, x: 72, imageY: 0.46, title: '读懂职责与要求', detail: '职位描述和任职要求对应准备重点，方便判断自己的匹配度。' },
+    { progress: 0.78, x: 50, imageY: 0.76, title: '确认投递方式', detail: '查看岗位亮点与公开投递入口，决定收藏、分享或立即投递。' },
   ] satisfies ScrollNote[],
   courseList: [
-    { progress: 0.18, x: 28, imageY: 0.32, title: '先完成学校必修', detail: '必修课程围绕求职基础、简历和面试，帮助你搭好准备框架。' },
-    { progress: 0.5, x: 72, imageY: 0.58, title: '结合岗位继续学习', detail: '推荐课程会匹配目标方向，把通用方法延伸到具体岗位能力。' },
-    { progress: 0.82, x: 50, imageY: 0.8, title: '进入课程看完整章节', detail: '选择课程后可查看视频、学习进度和章节任务。' },
+    { progress: 0.18, x: 28, imageY: 0.24, title: '先完成老师推送的必修', detail: '上方课程由老师推送，属于学生必须完成的求职基础。' },
+    { progress: 0.5, x: 72, imageY: 0.58, title: '选修系统推荐课程', detail: '下方课程由系统结合目标岗位分析推荐，学生可以按需选修。' },
+    { progress: 0.82, x: 50, imageY: 0.82, title: '进入课程看完整章节', detail: '选择课程后可查看视频、学习进度和章节任务。' },
   ] satisfies ScrollNote[],
   course: [
     { progress: 0.18, x: 28, imageY: 0.24, title: '先锁定课程目标', detail: '从视频和章节主题了解本课要解决的求职问题。' },
@@ -279,9 +303,9 @@ const TEACHER_SCROLL_NOTES = {
     { progress: 0.82, x: 50, title: '完成岗位浏览', detail: '确认截止时间后，从底部课程继续教学管理。', anchorSelector: '.teacher-bottom-nav span:nth-child(3)' },
   ] satisfies ScrollNote[],
   courseCatalog: [
-    { progress: 0.18, x: 28, imageY: 0.24, title: '先看学校必修课程', detail: '求职、简历和面试三类必修课，覆盖学生准备的关键环节。' },
-    { progress: 0.5, x: 72, imageY: 0.48, title: '按学生方向推荐课程', detail: '结合班级目标岗位挑选课程，并直接推荐给对应学生。' },
-    { progress: 0.82, x: 50, imageY: 0.7, title: '补充岗位方向课程', detail: '继续比较产品与 AI 方向内容，给不同学生安排更合适的学习路径。' },
+    { progress: 0.18, x: 28, imageY: 0.24, title: '先看学校部署的必修', detail: '上方课程由学校部署给教师，老师需要再推送给学生完成。' },
+    { progress: 0.5, x: 72, imageY: 0.48, title: '推送必修课程给学生', detail: '核对班级后点击“推荐给学生”，把学校要求落到学生课程列表。' },
+    { progress: 0.82, x: 50, imageY: 0.7, title: '按需推送系统推荐', detail: '下方课程由系统按学生岗位方向推荐，老师可以选择性推送。' },
   ] satisfies ScrollNote[],
   courseDetail: [
     { progress: 0.18, x: 28, title: '看课程进度', detail: '确认班级整体完成度，判断课程推进是否正常。' },
@@ -351,7 +375,7 @@ export const chapters: Chapter[] = [
         detail: '第二张「简历制作」卡片上索引点亮起——点击它，看看 AI 怎么写简历。',
         image: 'assets/shots/current/student-home.png',
         studentView: 'home',
-        clickTarget: { x: 50, y: 51, anchorSelector: '.student-feature:nth-child(2)', goto: { chapter: 2, step: 0 } },
+        clickTarget: { x: 50, y: 51, label: '点击简历制作', anchorSelector: '.student-feature:nth-child(2)', goto: { chapter: 2, step: 0 } },
       },
       {
         caption: '③ 模拟面试 · 点击卡片进入',
@@ -426,14 +450,47 @@ export const chapters: Chapter[] = [
     icon: ICONS.resume,
     steps: [
       {
-        caption: '简历制作 · 结构化编辑与 AI 润色',
+        caption: '简历模板 · 先选择版式',
         detail:
-          '进入简历制作后，原样展示模板预览、风格说明和「使用此模板」操作；模板的版式、颜色和信息层级都来自小程序当前页面。',
+          '先浏览小程序当前的模板选择页。选定一套版式后，简历的配色和信息层级会沿用到后面的填写与预览。',
         image: 'assets/shots/current/student-resume-long.png',
         studentView: 'resume',
         autoScroll: true,
         scrollNotes: STUDENT_SCROLL_NOTES.resume,
-        clickTarget: { x: 7, y: 9, label: '返回学生首页', goto: { chapter: 0, step: 3 } },
+        clickTarget: { x: 26, y: 41, label: '选择苏简浅模板', goto: { chapter: 2, step: 1 } },
+      },
+      {
+        caption: '简历信息 · 先看完整录入界面',
+        detail:
+          '选好模板后进入信息录入页，先完整浏览基本信息、照片、求职期望和经历模块。滚动结束后，索引球会回到页面中心，点击它让 AI 自动补齐示例信息。',
+        image: 'assets/shots/current/student-resume-form-long.png',
+        studentView: 'resume',
+        autoScroll: true,
+        scrollNotes: [
+          { progress: 0.18, x: 28, imageY: 0.17, title: '先补齐基本信息', detail: '姓名、电话和邮箱会成为简历抬头的核心信息。' },
+          { progress: 0.48, x: 72, imageY: 0.47, title: '整理求职期望', detail: '目标职位、城市和薪资帮助简历突出匹配方向。' },
+          { progress: 0.8, x: 50, imageY: 0.78, title: '补充经历与亮点', detail: '教育、实践和校园经历共同组成可投递的内容。' },
+        ],
+        formFlow: {
+          filledImage: 'assets/shots/current/student-resume-filled-long.png',
+          fillTarget: { x: 50, y: 50, label: '点击补充信息' },
+          generateTarget: { x: 50, y: 91, label: '点击生成简历' },
+          goto: { chapter: 2, step: 2 },
+        },
+      },
+      {
+        caption: '简历预览 · 查看生成结果',
+        detail:
+          '信息补充完成后，进入小程序真实简历预览页。继续浏览个人信息、求职期望和经历内容，最后点击返回索引球回到学生首页。',
+        image: 'assets/shots/current/student-resume-preview-long.png',
+        studentView: 'resume',
+        autoScroll: true,
+        scrollNotes: [
+          { progress: 0.18, x: 28, imageY: 0.18, title: '先看简历抬头', detail: '姓名、联系方式和模板名称先形成清晰的第一印象。' },
+          { progress: 0.5, x: 72, imageY: 0.48, title: '检查目标与经历', detail: '求职期望、教育和实践经历会按版式完整呈现。' },
+          { progress: 0.92, x: 50, imageY: 0.94, title: '可以导出 PDF', detail: '确认内容后，可以保存、预览或分享 PDF 简历。' },
+        ],
+        clickTarget: { x: 7, y: 5, label: '返回学生首页', goto: { chapter: 0, step: 3 } },
       },
     ],
   },
@@ -445,14 +502,33 @@ export const chapters: Chapter[] = [
     icon: ICONS.interview,
     steps: [
       {
-        caption: '模拟面试 · 随时开练的面试官',
+        caption: '模拟面试 · 先补齐面试信息',
         detail:
-          '进入模拟面试后，原样展示面试信息、岗位要求、求职信息和简历上传入口，底部固定「开始面试」按钮用于启动练习。',
+          '先按小程序原页面比例浏览公司、岗位、岗位要求和求职背景。滚动展示结束后点击「补充信息」，自动填入示例内容，再点击「开始面试」进入真实面试界面。',
         image: 'assets/shots/current/student-interview-long.png',
         studentView: 'interview',
         autoScroll: true,
         scrollNotes: STUDENT_SCROLL_NOTES.interview,
-        clickTarget: { x: 7, y: 6, label: '返回学生首页', goto: { chapter: 0, step: 4 } },
+        formFlow: {
+          filledImage: 'assets/shots/current/student-interview-filled-long.png',
+          fillTarget: { x: 50, y: 50, label: '点击补充信息' },
+          generateTarget: { x: 50, y: 91, label: '点击开始面试' },
+          goto: { chapter: 3, step: 1 },
+          captureTail: 'interview-form',
+        },
+      },
+      {
+        caption: '面试进行中 · 文字与语音双通道',
+        detail:
+          '进入面试界面后，AI 会围绕目标公司和岗位逐题提问。输入框左侧的麦克风按钮可以直接用语音回答；AI 实时语音面试功能正在开发中，后续会带来更自然的对话体验。',
+        image: 'assets/shots/current/student-interview-chat.png',
+        studentView: 'interview',
+        hotspots: [
+          { x: 11, y: 88, label: '点击麦克风，用语音回答' },
+          { x: 70, y: 46, label: 'AI 实时语音面试开发中' },
+        ],
+        clickTarget: { x: 8, y: 9, label: '结束面试，返回首页', goto: { chapter: 0, step: 4 } },
+        focusZoom: false,
       },
     ],
   },
@@ -464,14 +540,34 @@ export const chapters: Chapter[] = [
     icon: ICONS.chart,
     steps: [
       {
-        caption: '竞争力分析 · AI 评估求职竞争力',
+        caption: '竞争力分析 · 先补充信息再生成',
         detail:
-          '进入竞争力分析后，原样展示基本信息和能力信息表单；底部固定「开始竞争力分析」按钮会把这些信息交给 AI 评估。',
+          '先按小程序原始比例浏览基本信息和能力信息。滚动结束后点击「补充信息」，自动填入示例内容，再点击「生成竞争力分析」查看结果。',
         image: 'assets/shots/current/student-competitiveness-long.png',
         studentView: 'competitiveness',
         autoScroll: true,
         scrollNotes: STUDENT_SCROLL_NOTES.competitiveness,
-        clickTarget: { x: 7, y: 7, label: '返回更多功能', goto: { chapter: 0, step: 6 } },
+        formFlow: {
+          filledImage: 'assets/shots/current/student-competitiveness-filled-long.png',
+          fillTarget: { x: 50, y: 50, label: '点击补充信息' },
+          generateTarget: { x: 50, y: 91, label: '点击生成竞争力分析' },
+          goto: { chapter: 4, step: 1 },
+        },
+      },
+      {
+        caption: '竞争力结果 · 看清优势与提升方向',
+        detail:
+          '提交完整信息后进入小程序真实结果页：先看综合评分和岗位匹配度，再查看技能、维度、人群对比与提升建议。浏览完成后离开本功能。',
+        image: 'assets/shots/current/student-competitiveness-result-long.png',
+        studentView: 'competitiveness',
+        autoScroll: true,
+        scrollNotes: [
+          { progress: 0.16, x: 28, imageY: 0.12, title: '先看综合竞争力', detail: '总分和同行排名概括当前准备度，岗位匹配度补充目标方向判断。' },
+          { progress: 0.42, x: 72, imageY: 0.32, title: '拆解技能与维度', detail: '技能分析和维度评分能看出优势，也能找到需要补强的能力。' },
+          { progress: 0.68, x: 28, imageY: 0.57, title: '对比同方向表现', detail: '人群对比把当前水平放回目标岗位语境，避免只看一个总分。' },
+          { progress: 0.88, x: 72, imageY: 0.78, title: '带走提升建议', detail: '建议按优先级拆成项目成果、面试表达和持续积累三步行动。' },
+        ],
+        clickTarget: { x: 50, y: 96, label: '返回更多功能', goto: { chapter: 0, step: 6 } },
       },
     ],
   },
@@ -483,17 +579,44 @@ export const chapters: Chapter[] = [
     icon: ICONS.review,
     steps: [
       {
-        caption: '面试复盘 · 你离 offer 只差一次复盘',
+        caption: '面试复盘 · 先浏览面试突破器',
         detail:
-          '面试突破器支持上传面试录音、实时录音和简历补充，AI 会基于真实语料训练的面评模型逐题复盘。页面内容较短，直接完整呈现后，索引球引导你回到学生首页。',
-        image: 'assets/shots/current/student-review.png',
+          '先按小程序原始比例浏览面试突破器首页：了解服务、上传录音、实时录音和面试库。浏览结束后点击「补充信息」进入复盘配置。',
+        image: 'assets/shots/current/student-review-home-long.png',
         studentView: 'review',
-        clickTarget: { x: 9, y: 13, label: '返回更多功能', goto: { chapter: 5, step: 1 } },
+        focusZoom: false,
+        ctaRevealDelayMs: 1400,
+        clickTarget: { x: 50, y: 65, label: '点击补充信息', goto: { chapter: 5, step: 1 } },
+      },
+      {
+        caption: '面试复盘配置 · 先看信息再生成',
+        detail:
+          '进入信息确认页后，先浏览录音、简历和面试配置。点击「补充信息」自动填入经验级别、应聘岗位和面试轮次，再点击「开始分析」查看生成结果。',
+        image: 'assets/shots/current/student-review-info-long.png',
+        studentView: 'review',
+        autoScroll: true,
+        scrollNotes: STUDENT_SCROLL_NOTES.reviewInfo,
+        formFlow: {
+          filledImage: 'assets/shots/current/student-review-info-filled-long.png',
+          fillTarget: { x: 50, y: 50, label: '点击补充信息' },
+          generateTarget: { x: 50, y: 91, label: '点击开始分析' },
+          goto: { chapter: 5, step: 2 },
+        },
+      },
+      {
+        caption: '面试复盘结果 · 带走下一轮准备',
+        detail:
+          '分析结果页会展示综合通过率、维度评分、岗位结论和面经预览。滚动看完所有内容后，点击索引球离开面试复盘，回到学生首页。',
+        image: 'assets/shots/current/student-review-result-long.png',
+        studentView: 'review',
+        autoScroll: true,
+        scrollNotes: STUDENT_SCROLL_NOTES.reviewResult,
+        clickTarget: { x: 50, y: 96, label: '返回学生首页', goto: { chapter: 5, step: 3 } },
       },
       {
         caption: '学生首页 · 接下来看看岗位',
         detail:
-          '面试复盘已经展示完成。回到学生首页后，沿着底部导航继续探索岗位信息与内推机会——索引球会指向「岗位」，点击它开始浏览机会列表。',
+          '面试复盘已经展示完成。回到学生首页后，沿着底部导航继续探索岗位信息与内推机会，索引球会指向「岗位」。',
         image: 'assets/shots/current/student-home.png',
         studentView: 'home',
         clickTarget: { x: 30, y: 93, label: '点击岗位', goto: { chapter: 6, step: 0 } },
@@ -510,12 +633,31 @@ export const chapters: Chapter[] = [
       {
         caption: '岗位推荐 · 一眼浏览机会列表',
         detail:
-          '从学生首页底部点击「岗位」进入机会列表。页面按小程序原始比例依次展示推荐 / 喜欢、搜索筛选和完整岗位卡片；浏览结束后，索引球会落到真实的「课程」入口。',
+          '从学生首页底部点击「岗位」进入机会列表。页面按小程序原始比例展示推荐 / 喜欢、搜索筛选和岗位卡片；浏览完成后，索引球会指向第一张岗位卡，带你进入具体详情。',
         image: 'assets/shots/current/student-jobs-long.png',
         studentView: 'jobs',
         autoScroll: true,
         scrollNotes: STUDENT_SCROLL_NOTES.jobs,
-        clickTarget: { x: 50, y: 95, label: '点击课程', goto: { chapter: 7, step: 0 } },
+        clickTarget: { x: 50, y: 29, label: '点击查看岗位详情', goto: { chapter: 6, step: 1 } },
+      },
+      {
+        caption: '岗位详情 · 看清职位与投递方式',
+        detail:
+          '点击岗位卡片后进入真实岗位详情页：先看薪资、公司和岗位标签，再浏览职位描述、任职要求、岗位亮点与公开投递方式。页面内容较长，会继续按原页面比例滚动展示；看完后点击左上角返回岗位列表。',
+        image: 'assets/shots/current/student-job-detail-long.png',
+        studentView: 'jobs',
+        autoScroll: true,
+        scrollNotes: STUDENT_SCROLL_NOTES.jobDetail,
+        clickTarget: { x: 7, y: 8, label: '返回岗位列表', goto: { chapter: 6, step: 2 } },
+      },
+      {
+        caption: '岗位展示完成 · 顺势进入课程',
+        detail:
+          '岗位列表和具体详情已经看完。回到岗位页底部导航后，索引球会落到「课程」，继续查看与目标岗位匹配的学习内容。',
+        image: 'assets/shots/current/student-jobs.png',
+        studentView: 'jobs',
+        focusZoom: false,
+        clickTarget: { x: 50, y: 93, label: '点击课程', goto: { chapter: 7, step: 0 } },
       },
     ],
   },
@@ -529,18 +671,20 @@ export const chapters: Chapter[] = [
       {
         caption: '职业课程体系 · 点击课程内容',
         detail:
-          '从岗位页底部点击「课程」进入课程学习。简历、面试、行业认知等分类课程集中在这里，索引球会指向「求职精品课」——点击它查看课程详情。',
+          '从岗位页底部点击「课程」进入课程学习。点击「推荐课程」后，会先看到老师推送的必修内容，再看到系统结合目标岗位推荐的选修内容。',
         image: 'assets/shots/current/student-course.png',
         studentView: 'course-list',
         clickTarget: { x: 50, y: 27, label: '点击推荐课程', goto: { chapter: 7, step: 1 } },
       },
       {
-        caption: '推荐课程 · 选择要学习的课程',
+        caption: '推荐课程 · 先看必修，再看岗位选修',
         detail:
-          '进入推荐课程列表后，原样展示必修课程、课程封面、章节数、学习进度和岗位方向推荐，点击第一张课程卡继续进入详情。',
-        image: 'assets/shots/current/student-course-list.png',
+          '进入推荐课程列表后先滚动展示完整内容：上方是老师推送、学生必须完成的必修课程；下方是系统分析目标岗位后推荐的选修课程。看完后索引球指向第一张必修课，点击进入课程详情。',
+        image: 'assets/shots/current/student-course-list-long.png',
         studentView: 'course-list',
-        clickTarget: { x: 50, y: 35, label: '点击大学生求职通识课', goto: { chapter: 7, step: 2 } },
+        autoScroll: true,
+        scrollNotes: STUDENT_SCROLL_NOTES.courseList,
+        clickTarget: { x: 50, y: 30, label: '点击必修课程', goto: { chapter: 7, step: 2 } },
       },
       {
         caption: '课程详情 · 查看学习进度与章节',
@@ -856,7 +1000,7 @@ export const chapters: Chapter[] = [
   {
     id: 'teacher-workbench-route',
     title: '工作台',
-    subtitle: '班级数据与就业进度',
+    subtitle: '工作台首页与岗位入口',
     audience: 'teacher',
     teacherMenu: 'workbench',
     icon: ICONS.overview,
@@ -864,29 +1008,11 @@ export const chapters: Chapter[] = [
       {
         caption: '工作台内容总览 · 先建立全局视角',
         detail:
-          '先完整浏览小程序当前工作台：教师身份、班级统计、筛选条件和学生列表都会停留在原始比例。看完后索引球落到真实的班级数据区域，点击继续查看班级看板。',
+          '先完整浏览小程序当前工作台：教师身份、班级统计、筛选条件和学生列表都会停留在原始比例。工作台首页展示结束后，不再虚构班级数据入口，索引球直接落到底部导航的「岗位」，继续查看岗位机会。',
         image: 'assets/shots/current/teacher-home-long.png',
         teacherView: 'dashboard-current',
         autoScroll: true,
         scrollNotes: TEACHER_SCROLL_NOTES.dashboardCurrent,
-        clickTarget: { x: 50, y: 27, label: '查看班级数据', goto: { chapter: 15, step: 1 } },
-      },
-      {
-        caption: '班级看板 · 从班级数据找重点',
-        detail:
-          '进入班级看板后，按小程序当前页面展示班级身份、核心指标、就业状态和学生卡片。索引球停在就业状态分布区域，点击继续查看就业进度。',
-        image: 'assets/shots/current/teacher-dashboard-long.png',
-        teacherView: 'dashboard-detail',
-        autoScroll: true,
-        scrollNotes: TEACHER_SCROLL_NOTES.board,
-        clickTarget: { x: 50, y: 18, label: '查看就业进度', goto: { chapter: 15, step: 2 } },
-      },
-      {
-        caption: '就业进度展示完成 · 回到工作台',
-        detail:
-          '就业进度页已经把已关注、面试中、实习中和已有结果完整展示。回到工作台后，索引球准确落在底部导航的「岗位」，点击继续查看岗位机会。',
-        image: 'assets/shots/current/teacher-home.png',
-        teacherView: 'dashboard-current',
         clickTarget: { x: 30, y: 93, label: '点击下方岗位', goto: { chapter: 16, step: 0 } },
       },
     ],
@@ -940,21 +1066,35 @@ export const chapters: Chapter[] = [
       {
         caption: '课程首页 · 教学工作与班级进度',
         detail:
-          '点击教师端底部「课程」进入课程管理。页面按小程序当前结构展示「推荐课程」和「全部课程」两个入口：前者用于学校必修与系统推荐，后者支持分类筛选和课程搜索。看完后点击推荐课程，继续查看班级反馈。',
+          '点击教师端底部「课程」进入课程管理。进入「推荐课程」后，上方是学校部署的必修课程，需要老师推送给学生；下方是系统按学生岗位方向推荐的课程，老师可以选择性推送。',
         image: 'assets/shots/current/teacher-courses.png',
         teacherView: 'courses',
         // 当前小程序课程首页只有两个入口和一组摘要，一屏可读完，直接引导点击。
         clickTarget: { x: 50, y: 26, label: '点击推荐课程', goto: { chapter: 17, step: 1 } },
       },
       {
-        caption: '课程详情 · 章节与学习分层',
+        caption: '推荐课程 · 学校必修与系统推荐',
         detail:
-          '进入推荐课程列表后，原样展示必修课程、课程封面、章节数、推荐状态和「推荐给学生」操作。看完后回到课程首页，继续点击「通知」。',
+          '进入推荐课程列表后自动滚动展示完整内容：上方必修课程来自学校部署，下方课程由系统根据班级学生的岗位方向推荐。展示结束后，索引球落到课程卡片右侧的「推荐给学生」，点击进入推送设置。',
         image: 'assets/shots/current/teacher-course-list-long.png',
         teacherView: 'course-feedback',
         autoScroll: true,
         scrollNotes: TEACHER_SCROLL_NOTES.courseCatalog,
-        clickTarget: { x: 7, y: 8, label: '返回课程首页', goto: { chapter: 17, step: 2 } },
+        clickTarget: { x: 84, y: 28, label: '推荐给学生', goto: { chapter: 17, step: 2 } },
+      },
+      {
+        caption: '推荐给学生 · 按班级或学生精准推送',
+        detail:
+          '点击「推荐给学生」后打开推送弹窗。老师可以先按班级或学院筛选，也可以在学生列表中逐个勾选具体学生；还可以把这门课列为必修，再确认推荐，让不同学生得到更合适的学习安排。',
+        image: 'assets/shots/current/teacher-course-recommend-picker.png',
+        teacherView: 'course-recommend-picker',
+        focusZoom: false,
+        hotspots: [
+          { x: 50, y: 37, label: '按班级或学院筛选' },
+          { x: 12, y: 58, label: '逐个选择具体学生' },
+          { x: 50, y: 91, label: '可设为必修再确认推荐' },
+        ],
+        clickTarget: { x: 92, y: 24, label: '关闭推荐弹窗', goto: { chapter: 17, step: 3 } },
       },
       {
         caption: '课程完成 · 引导进入通知',
